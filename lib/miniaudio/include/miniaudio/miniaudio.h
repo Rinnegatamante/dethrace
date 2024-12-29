@@ -17918,7 +17918,7 @@ DEVICE I/O
 
 /* Disable run-time linking on certain backends and platforms. */
 #ifndef MA_NO_RUNTIME_LINKING
-    #if defined(MA_EMSCRIPTEN) || defined(MA_ORBIS) || defined(MA_PROSPERO)
+    #if defined(MA_EMSCRIPTEN) || defined(MA_ORBIS) || defined(MA_PROSPERO) || defined(__vita__)
         #define MA_NO_RUNTIME_LINKING
     #endif
 #endif
@@ -74085,6 +74085,10 @@ static ma_uint64 ma_engine_node_get_required_input_frame_count(const ma_engine_n
 
 static ma_result ma_engine_node_set_volume(ma_engine_node* pEngineNode, float volume)
 {
+#ifdef __vita__
+    // Without this hack, some sounds overflow causing horrible crackling
+    volume /= 2.0f;
+#endif
     if (pEngineNode == NULL) {
         return MA_INVALID_ARGS;
     }

@@ -12,6 +12,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#ifdef __vita__
+#include <vitasdk.h>
+#endif
+
 br_pixelmap* palette;
 uint32_t* screen_buffer;
 
@@ -169,11 +173,16 @@ void Harness_Init(int* argc, char* argv[]) {
     harness_game_config.install_signalhandler = 1;
 
     Harness_ProcessCommandLine(argc, argv);
-
+#ifndef __vita__
     if (harness_game_config.install_signalhandler) {
         OS_InstallSignalHandler(argv[0]);
     }
-
+#else
+    scePowerSetArmClockFrequency(444);
+    scePowerSetBusClockFrequency(222);
+    scePowerSetGpuClockFrequency(222);
+    scePowerSetGpuXbarClockFrequency(166);
+#endif
     char* root_dir = getenv("DETHRACE_ROOT_DIR");
     if (root_dir != NULL) {
         LOG_INFO("DETHRACE_ROOT_DIR is set to '%s'", root_dir);

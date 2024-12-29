@@ -36,6 +36,12 @@ else()
         -Wstrict-prototypes
     )
 endif()
+if (VITA)
+target_compile_options(dethrace_obj PRIVATE
+        -Wl,-q -O3 -mfloat-abi=hard -ffast-math
+    )
+endif()
+
 target_compile_definitions(dethrace_obj PRIVATE INSIDE_DETHRACE)
 if(DETHRACE_FIX_BUGS)
     target_compile_definitions(dethrace_obj PRIVATE DETHRACE_FIX_BUGS)
@@ -176,6 +182,15 @@ add_executable(dethrace
 
 target_link_libraries(dethrace PRIVATE dethrace_obj compile_with_werror)
 target_sources(dethrace PRIVATE main.c)
+
+if (VITA)
+    target_link_options(dethrace PRIVATE  -Wl,-q -g)
+    target_link_libraries(dethrace PRIVATE 
+        -Wl,--whole-archive taihen_stub SceNet_stub SceHid_stub SceNetCtl_stub SceSysmodule_stub
+        SceKernelDmacMgr_stub SceAppMgr_stub SceGxm_stub SceAudioIn_stub SceAudio_stub
+        SceTouch_stub SceCtrl_stub SceIme_stub SceCommonDialog_stub SceMotion_stub
+        ScePower_stub SceDisplay_stub -Wl,--no-whole-archive)
+endif()
 
 if(MSVC)
     target_link_libraries(dethrace PRIVATE dbghelp)

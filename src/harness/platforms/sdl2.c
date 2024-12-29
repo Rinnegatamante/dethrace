@@ -82,6 +82,118 @@ static int is_only_key_modifier(int modifier_flags, int flag_check) {
     return (modifier_flags & flag_check) && (modifier_flags & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT | KMOD_GUI)) == (modifier_flags & flag_check);
 }
 
+#ifdef __vita__
+#include <vitasdk.h>
+static int map_vita_key_to_sdl_scancode(uint32_t key) {
+	switch (key) {
+	case SCE_CTRL_CROSS:
+		return SDL_SCANCODE_SPACE;
+	case SCE_CTRL_CIRCLE:
+		return SDL_SCANCODE_B;
+	case SCE_CTRL_TRIANGLE:
+		return SDL_SCANCODE_X;
+	case SCE_CTRL_SQUARE:
+		return SDL_SCANCODE_Y;
+	case SCE_CTRL_LTRIGGER:
+		return SDL_SCANCODE_L;
+	case SCE_CTRL_RTRIGGER:
+		return SDL_SCANCODE_R;
+	//case SCE_CTRL_L2:
+	//	return SDL_SCANCODE_MINUS;
+	//case SCE_CTRL_R2:
+	//	return SDL_SCANCODE_EQUALS;
+	case SCE_CTRL_START:
+		return SDL_SCANCODE_RETURN;
+	case SCE_CTRL_SELECT:
+		return SDL_SCANCODE_ESCAPE;
+	case SCE_CTRL_UP:
+		return SDL_SCANCODE_KP_8;
+	case SCE_CTRL_DOWN:
+		return SDL_SCANCODE_KP_2;
+	case SCE_CTRL_LEFT:
+		return SDL_SCANCODE_KP_4;
+	case SCE_CTRL_RIGHT:
+		return SDL_SCANCODE_KP_6;
+	default:
+		return -1;
+    }
+}
+
+uint32_t vita_buttons[] = {
+	SCE_CTRL_CROSS,
+	SCE_CTRL_CIRCLE,
+	SCE_CTRL_SQUARE,
+	SCE_CTRL_TRIANGLE,
+	SCE_CTRL_START,
+	SCE_CTRL_SELECT,
+	SCE_CTRL_LTRIGGER,
+	SCE_CTRL_RTRIGGER,
+	SCE_CTRL_UP,
+	SCE_CTRL_DOWN,
+	SCE_CTRL_LEFT,
+	SCE_CTRL_RIGHT,
+};
+
+static int get_and_handle_message(MSG_* msg) {
+	SceCtrlData pad;
+	sceCtrlPeekBufferPositive(0, &pad, 1);
+    int dinput_key;
+	for (uint32_t i = 0; i < sizeof(vita_buttons) / sizeof(*vita_buttons); i++) {
+        if ((pad.buttons & vita_buttons[i]) == vita_buttons[i]) {
+            int sdl_scancode = map_vita_key_to_sdl_scancode(vita_buttons[i]);
+            if (sdl_scancode >= 0) {
+                dinput_key = sdlScanCodeToDirectInputKeyNum[sdl_scancode];
+                if (dinput_key == 0) {
+                    LOG_WARN("unexpected scan code %s (%d)", SDL_GetScancodeName(sdl_scancode), sdl_scancode);
+                    continue;
+                }
+                directinput_key_state[dinput_key] = 0x80;
+            }
+        } else {
+            int sdl_scancode = map_vita_key_to_sdl_scancode(vita_buttons[i]);
+            if (sdl_scancode >= 0) {
+                dinput_key = sdlScanCodeToDirectInputKeyNum[sdl_scancode];
+                if (dinput_key != 0) {
+                    directinput_key_state[dinput_key] = 0x00;
+                }
+            }
+        }
+    }
+    if (pad.ly < 80) {
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_UP];
+        directinput_key_state[dinput_key] = 0x80;
+    } else if (pad.ly > 170) {
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_DOWN];
+        directinput_key_state[dinput_key] = 0x80;
+    } else {
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_UP];
+        directinput_key_state[dinput_key] = 0x00;
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_DOWN];
+        directinput_key_state[dinput_key] = 0x00;
+    }
+    if (pad.lx > 170) {
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_RIGHT];
+        directinput_key_state[dinput_key] = 0x80;
+    } else if (pad.lx < 80) {
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_LEFT];
+        directinput_key_state[dinput_key] = 0x80;
+    } else {
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_RIGHT];
+        directinput_key_state[dinput_key] = 0x00;
+        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_LEFT];
+        directinput_key_state[dinput_key] = 0x00;
+    }
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_QUIT:
+            msg->message = WM_QUIT;
+            return 1;
+        }
+    }
+    return 0;
+}
+#else
 static int get_and_handle_message(MSG_* msg) {
     SDL_Event event;
     int dinput_key;
@@ -134,6 +246,7 @@ static int get_and_handle_message(MSG_* msg) {
     }
     return 0;
 }
+#endif
 
 static void get_keyboard_state(unsigned int count, uint8_t* buffer) {
     memcpy(buffer, directinput_key_state, count);

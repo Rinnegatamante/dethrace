@@ -21,6 +21,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef __vita__
+#include <vitasdk.h>
+#endif
+
 // All functions have a "_" suffix to avoid collisions with <windows.h>-defined types
 
 uint32_t GetFileAttributesA_(char* lpFileName) {
@@ -153,7 +157,11 @@ int FindNextFileA_(HANDLE_ hFindFile, WIN32_FIND_DATAA_* lpFindFileData) {
         return 0;
     }
     while ((entry = readdir(hFindFile)) != NULL) {
+#ifdef __vita__
+        if (SCE_S_ISREG(entry->d_stat.st_mode)) {
+#else
         if (entry->d_type == DT_REG) {
+#endif
             strcpy(lpFindFileData->cFileName, entry->d_name);
             return 1;
         }

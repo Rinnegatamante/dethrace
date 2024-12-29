@@ -18,7 +18,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h> // for getaddrinfo() and freeaddrinfo()
+#ifndef __vita__
 #include <sys/ioctl.h>
+#else
+#include <vitasdk.h>
+#define FIONBIO SCE_NET_SO_NBIO
+#endif
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h> // for close()

@@ -21,6 +21,10 @@ endif()
 
 target_link_libraries(harness PRIVATE brender miniaudio stb compile_with_werror)
 
+if (VITA)
+target_link_libraries(harness PRIVATE OpenSLES)
+endif()
+
 if(NOT MSVC)
     target_compile_options(harness PRIVATE
         -Wall
@@ -78,6 +82,10 @@ if(WIN32)
 elseif(APPLE)
     target_sources(harness PRIVATE
         os/macos.c
+    )
+elseif(VITA)
+    target_sources(harness PRIVATE
+        os/vita.c
     )
 else()
     target_sources(harness PRIVATE

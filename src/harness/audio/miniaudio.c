@@ -47,17 +47,96 @@ ma_engine engine;
 ma_sound cda_sound;
 int cda_sound_initialized;
 
+#ifdef __vita__
+#define NUM_SAMPLES (512)
+#define NUM_CHANNELS (2)
+#define SAMPLERATE (48000)
+#ifdef USE_SDL2
+#include <SDL2/SDL.h>
+void data_callback(void* pUserData, ma_uint8* pBuffer, int bufferSizeInBytes) {
+    float bufferF32[NUM_SAMPLES * NUM_CHANNELS];
+    ma_uint32 bufferSizeInFrames = (ma_uint32)(bufferSizeInBytes * 2) / ma_get_bytes_per_frame(ma_format_f32, ma_engine_get_channels(&engine));
+    ma_engine_read_pcm_frames(&engine, bufferF32, bufferSizeInFrames, NULL);
+    int16_t *pBufferS16 = (int16_t *)pBuffer;
+    for (int i = 0; i < bufferSizeInBytes / 2; i++) {
+        pBufferS16[i] = (int16_t)(bufferF32[i] * 32767.0f - 1.0f);
+    }
+}
+#else
+#include <vitasdk.h>
+static int vita_audio_thread(int args, void *argp) {
+    float bufferF32[NUM_SAMPLES * NUM_CHANNELS];
+    int16_t bufferS16[2][NUM_SAMPLES * NUM_CHANNELS];
+    int chn = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, NUM_SAMPLES, 48000, NUM_CHANNELS == 1 ? SCE_AUDIO_OUT_MODE_MONO : SCE_AUDIO_OUT_MODE_STEREO);
+    sceAudioOutSetConfig(chn, -1, -1, -1);
+    int vol[] = {32767, 32767};
+    sceAudioOutSetVolume(chn, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
+    
+    int buf_idx = 0;
+    for (;;) {
+        ma_uint32 bufferSizeInFrames = (ma_uint32)(NUM_SAMPLES * NUM_CHANNELS * 4) / ma_get_bytes_per_frame(ma_format_f32, ma_engine_get_channels(&engine));
+        ma_engine_read_pcm_frames(&engine, bufferF32, bufferSizeInFrames, NULL);
+        for (int i = 0; i < NUM_SAMPLES * NUM_CHANNELS; i++) {
+            bufferS16[buf_idx][i] = (int16_t)(bufferF32[i] * 32767.0f - 1.0f);
+        }
+        sceAudioOutOutput(chn, bufferS16[buf_idx]);
+        buf_idx = (buf_idx + 1) % 2;
+    }
+    sceAudioOutReleasePort(chn);
+    return sceKernelExitDeleteThread(0);
+}
+#endif
+#endif
+
 tAudioBackend_error_code AudioBackend_Init(void) {
     ma_result result;
     ma_engine_config config;
 
     config = ma_engine_config_init();
+#ifdef __vita__
+    config.noDevice = MA_TRUE;
+    config.channels = NUM_CHANNELS;
+    config.sampleRate = SAMPLERATE;
+#endif
     result = ma_engine_init(&config, &engine);
     if (result != MA_SUCCESS) {
-        printf("Failed to initialize audio engine.");
+        printf("Failed to initialize audio engine. (%x)\n", result);
         return eAB_error;
     }
+#ifdef __vita__
+#ifdef USE_SDL2
+    SDL_AudioSpec desiredSpec;
+    SDL_AudioSpec obtainedSpec;
+    SDL_AudioDeviceID deviceID;
+    
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
+        printf("Failed to initialize SDL sub-system.\n");
+        return eAB_error;
+    }
+
+    MA_ZERO_OBJECT(&desiredSpec);
+    desiredSpec.freq     = SAMPLERATE;
+    desiredSpec.format   = AUDIO_S16;
+    desiredSpec.channels = NUM_CHANNELS;
+    desiredSpec.samples  = NUM_SAMPLES;
+    desiredSpec.callback = data_callback;
+    desiredSpec.userdata = NULL;
+
+    deviceID = SDL_OpenAudioDevice(NULL, 0, &desiredSpec, &obtainedSpec, SDL_AUDIO_ALLOW_ANY_CHANGE);
+    if (deviceID == 0) {
+        printf("Failed to open SDL audio device.\n");
+        return eAB_error;
+    }
+
+    printf("Obtained: srate: %d chns: %d, samples: %d, format: %x\n", obtainedSpec.freq, obtainedSpec.channels, obtainedSpec.samples, obtainedSpec.format);
+    SDL_PauseAudioDevice(deviceID, 0);
+#else
+    SceUID audiothread = sceKernelCreateThread("Audio Thread", (void*)&vita_audio_thread, 0x10000100, 0x10000, 0, 0, NULL);
+    sceKernelStartThread(audiothread, 0, NULL);
+#endif
+#else
     LOG_INFO("Playback device: '%s'", engine.pDevice->playback.name);
+#endif
     ma_engine_set_volume(&engine, harness_game_config.volume_multiplier);
 
     return eAB_success;

@@ -24,7 +24,25 @@ void BR_CALLBACK _BrBeginHook(void) {
 void BR_CALLBACK _BrEndHook(void) {
 }
 
+#ifdef __vita__
+#include <vitasdk.h>
+int _newlib_heap_size_user = 192 * 1024 * 1024;
+int dethrace_main(unsigned int argc, void* argv);
 int main(int argc, char* argv[]) {
+	// We need a bigger stack to run dethrace, so we create a new thread with a proper stack size
+	SceUID main_thread = sceKernelCreateThread("dethrace", dethrace_main, 0x40, 0x800000, 0, 0, NULL);
+	if (main_thread >= 0){
+		sceKernelStartThread(main_thread, 0, NULL);
+	}
+	return sceKernelExitDeleteThread(0);
+}
+int dethrace_main(unsigned int vita_argc, void *vita_argv) {
+	int argc = 0;
+	char *argv[1];
+	argv[0] = "";
+#else
+int main(int argc, char* argv[]) {
+#endif
 #ifdef _WIN32
     /* Attach to the console that started us if any */
     if (AttachConsole(ATTACH_PARENT_PROCESS)) {

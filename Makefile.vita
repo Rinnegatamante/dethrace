@@ -1,0 +1,18 @@
+TARGET		:= dethrace
+TITLE		:= DETHRACE1
+
+all: $(TARGET).vpk
+
+$(TARGET).vpk: $(TARGET).velf
+	vita-make-fself -c -s $< eboot.bin
+	vita-mksfoex -s TITLE_ID=$(TITLE) -d ATTRIBUTE2=12 "$(TARGET)" param.sfo
+	vita-pack-vpk -s param.sfo -b eboot.bin $(TARGET).vpk \
+		-a packaging/vita/sce_sys=sce_sys
+	
+%.velf: build/$(TARGET)
+	cp $< $<.unstripped.elf
+	arm-vita-eabi-strip -g $<
+	vita-elf-create $< $@
+	
+clean:
+	@rm -rf $(TARGET).velf $(TARGET).unstripped.elf $(TARGET).vpk eboot.bin param.sfo
