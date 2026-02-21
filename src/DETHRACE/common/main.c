@@ -22,8 +22,8 @@
 #include "utility.h"
 
 // IDA: void __cdecl QuitGame()
+// FUNCTION: CARM95 0x004a9ea0
 void QuitGame(void) {
-    LOG_TRACE("()");
 
     if (harness_game_info.mode == eGame_carmageddon_demo || harness_game_info.mode == eGame_splatpack_demo || harness_game_info.mode == eGame_splatpack_xmas_demo) {
         DoDemoGoodbye();
@@ -64,8 +64,6 @@ void QuitGame(void) {
 #endif
 
     PDShutdownSystem();
-    CloseDiagnostics();
-    exit(0);
 }
 
 // IDA: tU32 __cdecl TrackCount(br_actor *pActor, tU32 *pCount)
@@ -74,18 +72,17 @@ tU32 TrackCount(br_actor* pActor, tU32* pCount) {
     unsigned int z;
     int ad;
     float e;
-    LOG_TRACE("(%p, %p)", pActor, pCount);
     NOT_IMPLEMENTED();
 }
 
 // IDA: void __cdecl CheckNumberOfTracks()
 void CheckNumberOfTracks(void) {
     tU32 track_count;
-    LOG_TRACE("()");
     NOT_IMPLEMENTED();
 }
 
 // IDA: void __usercall ServiceTheGame(int pRacing@<EAX>)
+// FUNCTION: CARM95 0x004a9f29
 void ServiceTheGame(int pRacing) {
 
     CheckMemory();
@@ -111,19 +108,21 @@ void ServiceTheGame(int pRacing) {
 }
 
 // IDA: void __cdecl ServiceGame()
+// FUNCTION: CARM95 0x004a9fe4
 void ServiceGame(void) {
     ServiceTheGame(0);
 }
 
 // IDA: void __cdecl ServiceGameInRace()
+// FUNCTION: CARM95 0x004a9ff9
 void ServiceGameInRace(void) {
-    LOG_TRACE("()");
 
     ServiceTheGame(1);
     CheckKevKeys();
 }
 
 // IDA: void __usercall GameMain(int pArgc@<EAX>, char **pArgv@<EDX>)
+// FUNCTION: CARM95 0x004aa013
 void GameMain(int pArgc, char** pArgv) {
     tPath_name CD_dir;
 
@@ -136,8 +135,7 @@ void GameMain(int pArgc, char** pArgv) {
     UsePathFileToDetermineIfFullInstallation();
     if (!gCD_fully_installed && GetCDPathFromPathsTxtFile(CD_dir) && !PDCheckDriveExists(CD_dir)) {
         PDInitialiseSystem();
-        fprintf(stderr, "Can't find the Carmageddon CD\n");
-        exit(1);
+        PDFatalError("Can't find the Carmageddon CD\n");
     }
     InitialiseDeathRace(pArgc, pArgv);
     DoProgram();

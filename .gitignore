@@ -10,3 +10,7 @@
 dethrace/*
 *.obj
 *.zip
+
+reccmp-user.yml
+reccmp-build.yml
+reccmp-report*

@@ -17,45 +17,103 @@
 #include "utility.h"
 #include <stdlib.h>
 
+// GLOBAL: CARM95 0x00521678
 int gLast_fancy_index;
+
+// GLOBAL: CARM95 0x0052167c
 int gLast_credit_headup__displays; // suffix added to avoid duplicate symbol
+
+// GLOBAL: CARM95 0x00521680
 int gLast_time_credit_headup;
+
+// GLOBAL: CARM95 0x00521684
 tDR_font* gCached_font;
+
+// GLOBAL: CARM95 0x00541598
 br_font* gBR_fonts[4];
+
+// GLOBAL: CARM95 0x00541160
 tQueued_headup gQueued_headups[4];
+
+// GLOBAL: CARM95 0x00544e30
 int gOld_times[10];
+
+// GLOBAL: CARM95 0x00541590
 int gLast_fancy_headup;
+
+// GLOBAL: CARM95 0x00541594
 tU32 gLast_time_earn_time;
+
+// GLOBAL: CARM95 0x005415a8
 tU32 gLast_centre_headup;
+
+// GLOBAL: CARM95 0x005415ac
 tU32 gLast_fancy_time;
+
+// GLOBAL: CARM95 0x00541158
 int gQueued_headup_count;
+
+// GLOBAL: CARM95 0x0054114c
 tU32 gLast_earn_time;
+
+// GLOBAL: CARM95 0x00541154
 tU32 gLast_time_credit_amount;
+
+// GLOBAL: CARM95 0x00541150
 int gLast_credit_amount;
+
+// GLOBAL: CARM95 0x0053fdd8
 tHeadup gHeadups[15];
+
+// GLOBAL: CARM95 0x00544e60
 int gLaps_headup;
+
+// GLOBAL: CARM95 0x00544e68
 int gCar_kill_count_headup;
+
+// GLOBAL: CARM95 0x00544e5c
 int gTimer_headup;
+
+// GLOBAL: CARM95 0x00544e6c
 int gTime_awarded_headup;
+
+// GLOBAL: CARM95 0x00544e64
 int gPed_kill_count_headup;
+
+// GLOBAL: CARM95 0x00544eec
 int gDim_amount;
+
+// GLOBAL: CARM95 0x00544e70
+// gHeadup_images
+
+#ifdef DETHRACE_FIX_BUGS
 br_pixelmap* gHeadup_images[32]; // Modified by DethRace for the demo
+#else
+br_pixelmap* gHeadup_images[31];
+#endif
+
+// GLOBAL: CARM95 0x00544e58
 int gNet_cash_headup;
+
+// GLOBAL: CARM95 0x00544e1c
 int gNet_ped_headup;
+
 int gCredits_lost_headup;
+
+// GLOBAL: CARM95 0x00544e20
 int gCredits_won_headup;
 
 // IDA: void __usercall GetTimerString(char *pStr@<EAX>, int pFudge_colon@<EDX>)
+// FUNCTION: CARM95 0x004c4030
 void GetTimerString(char* pStr, int pFudge_colon) {
-    LOG_TRACE("(\"%s\", %d)", pStr, pFudge_colon);
 
     TimerString(gTimer, pStr, pFudge_colon, 0);
 }
 
 // IDA: void __cdecl InitHeadups()
+// FUNCTION: CARM95 0x004c4053
 void InitHeadups(void) {
     int i;
-    LOG_TRACE("()");
 
     for (i = 0; i < 15; i++) {
         gHeadups[i].type = eHeadup_unused;
@@ -67,17 +125,17 @@ void InitHeadups(void) {
 }
 
 // IDA: void __usercall ClearHeadup(int pIndex@<EAX>)
+// FUNCTION: CARM95 0x004c40c1
 void ClearHeadup(int pIndex) {
-    LOG_TRACE("(%d)", pIndex);
 
     gHeadups[pIndex].type = eHeadup_unused;
 }
 
 // IDA: void __usercall ClearHeadupSlot(int pSlot_index@<EAX>)
+// FUNCTION: CARM95 0x004c40e6
 void ClearHeadupSlot(int pSlot_index) {
     int i;
     tHeadup* the_headup;
-    LOG_TRACE("(%d)", pSlot_index);
 
     the_headup = gHeadups;
     for (i = 0; i < COUNT_OF(gHeadups); i++) {
@@ -90,9 +148,9 @@ void ClearHeadupSlot(int pSlot_index) {
 }
 
 // IDA: void __cdecl ClearHeadups()
+// FUNCTION: CARM95 0x004c414c
 void ClearHeadups(void) {
     int i;
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gHeadups); i++) {
         if (gHeadups[i].type) {
@@ -113,13 +171,14 @@ void ClearHeadups(void) {
 }
 
 // IDA: int __usercall HeadupActive@<EAX>(int pIndex@<EAX>)
+// FUNCTION: CARM95 0x004c421d
 int HeadupActive(int pIndex) {
-    LOG_TRACE("(%d)", pIndex);
 
     return gHeadups[pIndex].type != eHeadup_unused;
 }
 
 // IDA: void __usercall DRPixelmapText(br_pixelmap *pPixelmap@<EAX>, int pX@<EDX>, int pY@<EBX>, tDR_font *pFont@<ECX>, char *pText, int pRight_edge)
+// FUNCTION: CARM95 0x004c4256
 void DRPixelmapText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, char* pText, int pRight_edge) {
     int i;
     int x;
@@ -127,7 +186,6 @@ void DRPixelmapText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, cha
     int chr;
     int ch_width;
     unsigned char* ch;
-    LOG_TRACE9("(%p, %d, %d, %p, \"%s\", %d)", pPixelmap, pX, pY, pFont, pText, pRight_edge);
 
     len = strlen(pText);
     ch = (unsigned char*)pText;
@@ -169,6 +227,7 @@ void DRPixelmapText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, cha
 }
 
 // IDA: void __usercall DRPixelmapCleverText2(br_pixelmap *pPixelmap@<EAX>, int pX@<EDX>, int pY@<EBX>, tDR_font *pFont@<ECX>, signed char *pText, int pRight_edge)
+// FUNCTION: CARM95 0x004c43cf
 void DRPixelmapCleverText2(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, char* pText, int pRight_edge) {
     int i;
     int x;
@@ -177,7 +236,6 @@ void DRPixelmapCleverText2(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFo
     int ch_width;
     unsigned char* ch;
     tDR_font* new_font;
-    LOG_TRACE("(%p, %d, %d, %p, %p, %d)", pPixelmap, pX, pY, pFont, pText, pRight_edge);
 
     x = pX;
     len = strlen(pText);
@@ -229,12 +287,12 @@ void DRPixelmapCleverText2(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFo
     }
 }
 
+#ifdef DETHRACE_3DFX_PATCH
 // IDA: void __usercall DeviouslyDimRectangle(br_pixelmap *pPixelmap@<EAX>, int pLeft@<EDX>, int pTop@<EBX>, int pRight@<ECX>, int pBottom, int pKnock_out_corners)
 void DeviouslyDimRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int pBottom, int pKnock_out_corners) {
-    LOG_TRACE("(%p, %d, %d, %d, %d, %d)", pPixelmap, pLeft, pTop, pRight, pBottom, pKnock_out_corners);
 
     if (pPixelmap != gBack_screen) {
-        FatalError(124);
+        FatalError(kFatalError_CanOnlyDimRectanglesOfgBack_screen);
     }
 
     gDim_model->vertices[1].p.v[0] = pLeft;
@@ -252,8 +310,10 @@ void DeviouslyDimRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRig
     PDLockRealBackScreen(1);
     gDim_actor->render_style = BR_RSTYLE_NONE;
 }
+#endif
 
 // IDA: void __cdecl DimRectangle(br_pixelmap *pPixelmap, int pLeft, int pTop, int pRight, int pBottom, int pKnock_out_corners)
+// FUNCTION: CARM95 0x004c4604
 void DimRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int pBottom, int pKnock_out_corners) {
     tU8* ptr;
     tU8* depth_table_ptr;
@@ -262,12 +322,13 @@ void DimRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int p
     int y;
     int line_skip;
     int width;
-    LOG_TRACE9("(%p, %d, %d, %d, %d, %d)", pPixelmap, pLeft, pTop, pRight, pBottom, pKnock_out_corners);
 
+#ifdef DETHRACE_3DFX_PATCH
     if (gDevious_2d) {
         DeviouslyDimRectangle(pPixelmap, pLeft, pTop, pRight, pBottom, pKnock_out_corners);
         return;
     }
+#endif
 
     ptr = (tU8*)pPixelmap->pixels + pLeft + pPixelmap->row_bytes * pTop;
     line_skip = pPixelmap->row_bytes - pRight + pLeft;
@@ -301,9 +362,9 @@ void DimRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int p
 }
 
 // IDA: void __cdecl DimAFewBits()
+// FUNCTION: CARM95 0x004c479c
 void DimAFewBits(void) {
     int i;
-    LOG_TRACE("()");
 
     int dim_index; // Added
     dim_index = gProgram_state.cockpit_on && gProgram_state.cockpit_image_index >= 0;
@@ -319,27 +380,27 @@ void DimAFewBits(void) {
 }
 
 // IDA: void __cdecl KillOldestQueuedHeadup()
+// FUNCTION: CARM95 0x004c524c
 void KillOldestQueuedHeadup(void) {
-    LOG_TRACE("()");
 
     gQueued_headup_count--;
     memmove(&gQueued_headups[0], &gQueued_headups[1], gQueued_headup_count * sizeof(tQueued_headup));
 }
 
 // IDA: void __usercall DubreyBar(int pX_index@<EAX>, int pY@<EDX>, int pColour@<EBX>)
+// FUNCTION: CARM95 0x004c5438
 void DubreyBar(int pX_index, int pY, int pColour) {
     int x;
-    LOG_TRACE("(%d, %d, %d)", pX_index, pY, pColour);
 
     x = gCurrent_graf_data->ps_bar_left - gCurrent_graf_data->ps_x_pitch * pX_index;
     BrPixelmapLine(gBack_screen, x, pY, x, gCurrent_graf_data->ps_bar_height + pY, pColour);
 }
 
 // IDA: void __usercall DoPSPowerHeadup(int pY@<EAX>, int pLevel@<EDX>, char *pName@<EBX>, int pBar_colour@<ECX>)
+// FUNCTION: CARM95 0x004c530b
 void DoPSPowerHeadup(int pY, int pLevel, char* pName, int pBar_colour) {
     char s[16];
     int i;
-    LOG_TRACE("(%d, %d, \"%s\", %d)", pY, pLevel, pName, pBar_colour);
 
 #ifdef DETHRACE_3DFX_PATCH
     if (gBack_screen->type == BR_PMT_RGB_565) {
@@ -359,8 +420,8 @@ void DoPSPowerHeadup(int pY, int pLevel, char* pName, int pBar_colour) {
 }
 
 // IDA: void __cdecl DoPSPowerupHeadups()
+// FUNCTION: CARM95 0x004c5288
 void DoPSPowerupHeadups(void) {
-    LOG_TRACE("()");
 
     DoPSPowerHeadup(gCurrent_graf_data->armour_headup_y[gProgram_state.cockpit_on], gProgram_state.current_car.power_up_levels[0], "A", 45);
     DoPSPowerHeadup(gCurrent_graf_data->power_headup_y[gProgram_state.cockpit_on], gProgram_state.current_car.power_up_levels[1], "P", 99);
@@ -368,13 +429,13 @@ void DoPSPowerupHeadups(void) {
 }
 
 // IDA: void __usercall DoHeadups(tU32 pThe_time@<EAX>)
+// FUNCTION: CARM95 0x004c4906
 void DoHeadups(tU32 pThe_time) {
     int i;
     int x_offset;
     int y_offset;
     tHeadup* the_headup;
     int time_factor;
-    LOG_TRACE("(%d)", pThe_time);
 
     if (gNet_mode) {
         DoNetScores();
@@ -636,11 +697,11 @@ void DoHeadups(tU32 pThe_time) {
 }
 
 // IDA: int __usercall FindAHeadupHoleWoofBarkSoundsABitRude@<EAX>(int pSlot_index@<EAX>)
+// FUNCTION: CARM95 0x004c5493
 int FindAHeadupHoleWoofBarkSoundsABitRude(int pSlot_index) {
     int i;
     int empty_one;
     tHeadup* the_headup;
-    LOG_TRACE("(%d)", pSlot_index);
 
     empty_one = -1;
     for (i = 0, the_headup = gHeadups; i < COUNT_OF(gHeadups); i++, the_headup++) {
@@ -655,12 +716,12 @@ int FindAHeadupHoleWoofBarkSoundsABitRude(int pSlot_index) {
 }
 
 // IDA: int __usercall DRTextWidth@<EAX>(tDR_font *pFont@<EAX>, char *pText@<EDX>)
+// FUNCTION: CARM95 0x004c5514
 int DRTextWidth(tDR_font* pFont, char* pText) {
     int i;
     int len;
     int result;
     char* c;
-    LOG_TRACE("(%p, \"%s\")", pFont, pText);
 
     c = pText;
     result = 0;
@@ -674,12 +735,12 @@ int DRTextWidth(tDR_font* pFont, char* pText) {
 }
 
 // IDA: int __usercall DRTextCleverWidth@<EAX>(tDR_font *pFont@<EAX>, signed char *pText@<EDX>)
+// FUNCTION: CARM95 0x004c5591
 int DRTextCleverWidth(tDR_font* pFont, signed char* pText) {
     int i;
     int len;
     int result;
     unsigned char* c;
-    LOG_TRACE("(%p, %p)", pFont, pText);
 
     result = 0;
     len = strlen((char*)pText) + 1;
@@ -698,17 +759,17 @@ int DRTextCleverWidth(tDR_font* pFont, signed char* pText) {
 }
 
 // IDA: void __usercall DRPixelmapCentredText(br_pixelmap *pPixelmap@<EAX>, int pX@<EDX>, int pY@<EBX>, tDR_font *pFont@<ECX>, char *pText)
+// FUNCTION: CARM95 0x004c5665
 void DRPixelmapCentredText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, char* pText) {
     int width_over_2;
-    LOG_TRACE("(%p, %d, %d, %p, \"%s\")", pPixelmap, pX, pY, pFont, pText);
 
     width_over_2 = DRTextWidth(pFont, pText) / 2;
     TransDRPixelmapText(pPixelmap, pX - width_over_2, pY, pFont, pText, width_over_2 + pX);
 }
 
 // IDA: int __usercall IsHeadupTextClever@<EAX>(signed char *pText@<EAX>)
+// FUNCTION: CARM95 0x004c5bd4
 int IsHeadupTextClever(signed char* pText) {
-    LOG_TRACE("(%p)", pText);
 
     while (*pText) {
         if (*pText < 0) {
@@ -720,9 +781,9 @@ int IsHeadupTextClever(signed char* pText) {
 }
 
 // IDA: int __usercall MungeHeadupWidth@<EAX>(tHeadup *pHeadup@<EAX>)
+// FUNCTION: CARM95 0x004c5981
 int MungeHeadupWidth(tHeadup* pHeadup) {
     int width;
-    LOG_TRACE("(%p)", pHeadup);
 
     width = 0;
     if (pHeadup->type == eHeadup_box_text) {
@@ -771,12 +832,12 @@ int MungeHeadupWidth(tHeadup* pHeadup) {
 }
 
 // IDA: int __usercall NewTextHeadupSlot2@<EAX>(int pSlot_index@<EAX>, int pFlash_rate@<EDX>, int pLifetime@<EBX>, int pFont_index@<ECX>, char *pText, int pQueue_it)
+// FUNCTION: CARM95 0x004c56b1
 int NewTextHeadupSlot2(int pSlot_index, int pFlash_rate, int pLifetime, int pFont_index, char* pText, int pQueue_it) {
     int index;
     tHeadup* the_headup;
     tHeadup_slot* headup_slot;
     tU32 time;
-    LOG_TRACE("(%d, %d, %d, %d, \"%s\", %d)", pSlot_index, pFlash_rate, pLifetime, pFont_index, pText, pQueue_it);
 
     time = PDGetTotalTime();
     if (pQueue_it && pSlot_index == 4 && time - gLast_centre_headup < 1000) {
@@ -841,18 +902,18 @@ int NewTextHeadupSlot2(int pSlot_index, int pFlash_rate, int pLifetime, int pFon
 }
 
 // IDA: int __usercall NewTextHeadupSlot@<EAX>(int pSlot_index@<EAX>, int pFlash_rate@<EDX>, int pLifetime@<EBX>, int pFont_index@<ECX>, char *pText)
+// FUNCTION: CARM95 0x004c5c1d
 int NewTextHeadupSlot(int pSlot_index, int pFlash_rate, int pLifetime, int pFont_index, char* pText) {
-    LOG_TRACE("(%d, %d, %d, %d, \"%s\")", pSlot_index, pFlash_rate, pLifetime, pFont_index, pText);
 
     return NewTextHeadupSlot2(pSlot_index, pFlash_rate, pLifetime, pFont_index, pText, 1);
 }
 
 // IDA: int __usercall NewImageHeadupSlot@<EAX>(int pSlot_index@<EAX>, int pFlash_rate@<EDX>, int pLifetime@<EBX>, int pImage_index@<ECX>)
+// FUNCTION: CARM95 0x004c5c4b
 int NewImageHeadupSlot(int pSlot_index, int pFlash_rate, int pLifetime, int pImage_index) {
     int index;
     tHeadup* the_headup;
     tHeadup_slot* headup_slot;
-    LOG_TRACE("(%d, %d, %d, %d)", pSlot_index, pFlash_rate, pLifetime, pImage_index);
 
     index = FindAHeadupHoleWoofBarkSoundsABitRude(pSlot_index);
     if (index >= 0) {
@@ -901,11 +962,11 @@ int NewImageHeadupSlot(int pSlot_index, int pFlash_rate, int pLifetime, int pIma
 }
 
 // IDA: void __usercall DoFancyHeadup(int pIndex@<EAX>)
+// FUNCTION: CARM95 0x004c5e50
 void DoFancyHeadup(int pIndex) {
     tU32 the_time;
     tHeadup* the_headup;
     int temp_ref;
-    LOG_TRACE("(%d)", pIndex);
 
     the_time = GetTotalTime();
     if (!gMap_mode && (gLast_fancy_index < 0 || the_time - gLast_fancy_time > 2000 || gLast_fancy_index <= pIndex)) {
@@ -925,12 +986,12 @@ void DoFancyHeadup(int pIndex) {
 }
 
 // IDA: void __cdecl AdjustHeadups()
+// FUNCTION: CARM95 0x004c5f58
 void AdjustHeadups(void) {
     int i;
     int delta_x;
     int delta_y;
     tHeadup* the_headup;
-    LOG_TRACE("()");
 
     the_headup = gHeadups;
     for (i = 0; i < COUNT_OF(gHeadups); i++) {
@@ -953,10 +1014,10 @@ void AdjustHeadups(void) {
 }
 
 // IDA: void __usercall MoveHeadupTo(int pHeadup_index@<EAX>, int pNew_x@<EDX>, int pNew_y@<EBX>)
+// FUNCTION: CARM95 0x004c6107
 void MoveHeadupTo(int pHeadup_index, int pNew_x, int pNew_y) {
     int delta_x;
     tHeadup* the_headup;
-    LOG_TRACE("(%d, %d, %d)", pHeadup_index, pNew_x, pNew_y);
 
     if (pHeadup_index >= 0) {
         delta_x = gHeadups[pHeadup_index].x - gHeadups[pHeadup_index].original_x;
@@ -967,9 +1028,9 @@ void MoveHeadupTo(int pHeadup_index, int pNew_x, int pNew_y) {
 }
 
 // IDA: void __usercall ChangeHeadupText(int pHeadup_index@<EAX>, char *pNew_text@<EDX>)
+// FUNCTION: CARM95 0x004c6169
 void ChangeHeadupText(int pHeadup_index, char* pNew_text) {
     tHeadup* the_headup;
-    LOG_TRACE("(%d, \"%s\")", pHeadup_index, pNew_text);
 
     if (pHeadup_index >= 0) {
         the_headup = &gHeadups[pHeadup_index];
@@ -979,9 +1040,9 @@ void ChangeHeadupText(int pHeadup_index, char* pNew_text) {
 }
 
 // IDA: void __usercall ChangeHeadupImage(int pHeadup_index@<EAX>, int pNew_image@<EDX>)
+// FUNCTION: CARM95 0x004c61d2
 void ChangeHeadupImage(int pHeadup_index, int pNew_image) {
     tHeadup* the_headup;
-    LOG_TRACE("(%d, %d)", pHeadup_index, pNew_image);
 
     if (pHeadup_index >= 0) {
         the_headup = &gHeadups[pHeadup_index];
@@ -1001,8 +1062,8 @@ void ChangeHeadupImage(int pHeadup_index, int pNew_image) {
 }
 
 // IDA: void __usercall ChangeHeadupColour(int pHeadup_index@<EAX>, int pNew_colour@<EDX>)
+// FUNCTION: CARM95 0x004c629e
 void ChangeHeadupColour(int pHeadup_index, int pNew_colour) {
-    LOG_TRACE("(%d, %d)", pHeadup_index, pNew_colour);
 
     if (pHeadup_index >= 0) {
         gHeadups[pHeadup_index].data.text_info.colour = gColours[pNew_colour];
@@ -1010,6 +1071,7 @@ void ChangeHeadupColour(int pHeadup_index, int pNew_colour) {
 }
 
 // IDA: void __usercall DoDamageScreen(tU32 pThe_time@<EAX>)
+// FUNCTION: CARM95 0x004c62d8
 void DoDamageScreen(tU32 pThe_time) {
     int i;
     int y_pitch;
@@ -1018,7 +1080,6 @@ void DoDamageScreen(tU32 pThe_time) {
     int the_wobble_y;
     br_pixelmap* the_image;
     tDamage_unit* the_damage;
-    LOG_TRACE("(%d)", pThe_time);
 
     if (&gProgram_state.current_car != gCar_to_view || gProgram_state.current_car_index != gProgram_state.current_car.index) {
         return;
@@ -1064,8 +1125,8 @@ void DoDamageScreen(tU32 pThe_time) {
 }
 
 // IDA: void __cdecl PoshDrawLine(float pAngle, br_pixelmap *pDestn, int pX1, int pY1, int pX2, int pY2, int pColour)
+// FUNCTION: CARM95 0x004c70fd
 void PoshDrawLine(float pAngle, br_pixelmap* pDestn, int pX1, int pY1, int pX2, int pY2, int pColour) {
-    LOG_TRACE("(%f, %p, %d, %d, %d, %d, %d)", pAngle, pDestn, pX1, pY1, pX2, pY2, pColour);
 
     if (pColour < 0) {
         if (pAngle >= 0.785 && pAngle <= 5.498 && (pAngle <= 2.356 || pAngle >= 3.926)) {
@@ -1087,6 +1148,7 @@ void PoshDrawLine(float pAngle, br_pixelmap* pDestn, int pX1, int pY1, int pX2, 
 }
 
 // IDA: void __usercall DoInstruments(tU32 pThe_time@<EAX>)
+// FUNCTION: CARM95 0x004c6474
 void DoInstruments(tU32 pThe_time) {
     br_pixelmap* speedo_image;
     br_pixelmap* tacho_image;
@@ -1099,7 +1161,6 @@ void DoInstruments(tU32 pThe_time) {
     double sin_angle;
     double cos_angle;
     double speed_mph;
-    LOG_TRACE("(%d)", pThe_time);
 
     if (gProgram_state.current_car_index == gProgram_state.current_car.index) {
         speed_mph = gCar_to_view->speedo_speed * WORLD_SCALE / 1600.0f * 3600000.0f;
@@ -1323,10 +1384,10 @@ void DoInstruments(tU32 pThe_time) {
 }
 
 // IDA: void __usercall DoSteeringWheel(tU32 pThe_time@<EAX>)
+// FUNCTION: CARM95 0x004c72e1
 void DoSteeringWheel(tU32 pThe_time) {
     br_pixelmap* hands_image;
     int hands_index;
-    LOG_TRACE("(%d)", pThe_time);
 
     if (gProgram_state.current_car_index == gProgram_state.current_car.index && gProgram_state.cockpit_on && gProgram_state.cockpit_image_index >= 0 && gProgram_state.which_view == eView_forward) {
         hands_index = (int)floor(gProgram_state.current_car.number_of_hands_images * ((1.f - gProgram_state.current_car.steering_angle / 10.f) / 2.f));
@@ -1353,9 +1414,9 @@ void DoSteeringWheel(tU32 pThe_time) {
 }
 
 // IDA: void __cdecl ChangingView()
+// FUNCTION: CARM95 0x004c7455
 void ChangingView(void) {
     tU32 the_time;
-    LOG_TRACE("()");
 
     if (gProgram_state.new_view == eView_undefined) {
         return;
@@ -1419,11 +1480,11 @@ void ChangingView(void) {
 }
 
 // IDA: void __usercall EarnCredits2(int pAmount@<EAX>, char *pPrefix_text@<EDX>)
+// FUNCTION: CARM95 0x004c76d8
 void EarnCredits2(int pAmount, char* pPrefix_text) {
     char s[256];
     int original_amount;
     tU32 the_time;
-    LOG_TRACE("(%d, \"%s\")", pAmount, pPrefix_text);
 
     if (gRace_finished) {
         return;
@@ -1453,21 +1514,21 @@ void EarnCredits2(int pAmount, char* pPrefix_text) {
         sprintf(s, "%s%s %d %s", GetMiscString(kMiscString_Lost), pPrefix_text, -pAmount, GetMiscString(kMiscString_Credits));
         gProgram_state.credits_lost -= original_amount;
     }
-    gLast_credit_headup__displays = NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, s);
+    gLast_credit_headup__displays = NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, s);
     gLast_earn_time = the_time;
 }
 
 // IDA: void __usercall EarnCredits(int pAmount@<EAX>)
+// FUNCTION: CARM95 0x004c78a8
 void EarnCredits(int pAmount) {
-    LOG_TRACE("(%d)", pAmount);
 
     EarnCredits2(pAmount, "");
 }
 
 // IDA: int __usercall SpendCredits@<EAX>(int pAmount@<EAX>)
+// FUNCTION: CARM95 0x004c78c4
 int SpendCredits(int pAmount) {
     int amount;
-    LOG_TRACE("(%d)", pAmount);
 
     gProgram_state.credits_lost += pAmount;
     if (gNet_mode == eNet_mode_none) {
@@ -1482,12 +1543,12 @@ int SpendCredits(int pAmount) {
 }
 
 // IDA: void __usercall AwardTime(tU32 pTime@<EAX>)
+// FUNCTION: CARM95 0x004c791e
 void AwardTime(tU32 pTime) {
     char s[256];
     tU32 original_amount;
     tU32 the_time;
     int i;
-    LOG_TRACE("(%d)", pTime);
 
     if (gRace_finished || gFreeze_timer || gNet_mode != eNet_mode_none || pTime == 0) {
         return;
@@ -1506,13 +1567,13 @@ void AwardTime(tU32 pTime) {
     gTimer += original_amount * 1000;
     s[0] = '+';
     TimerString(1000 * pTime, &s[1], 0, 0);
-    gLast_time_credit_headup = NewTextHeadupSlot(eHeadupSlot_time_award, 0, 2000, -2, s);
+    gLast_time_credit_headup = NewTextHeadupSlot(eHeadupSlot_time_award, 0, 2000, -kFont_BLUEHEAD, s);
     gLast_time_earn_time = the_time;
 }
 
 // IDA: void __usercall DrawRectangle(br_pixelmap *pPixelmap@<EAX>, int pLeft@<EDX>, int pTop@<EBX>, int pRight@<ECX>, int pBottom, int pColour)
+// FUNCTION: CARM95 0x004c7a61
 void DrawRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int pBottom, int pColour) {
-    LOG_TRACE("(%p, %d, %d, %d, %d, %d)", pPixelmap, pLeft, pTop, pRight, pBottom, pColour);
 
     BrPixelmapLine(pPixelmap, pLeft, pTop, pRight, pTop, pColour);
     BrPixelmapLine(pPixelmap, pLeft, pBottom, pRight, pBottom, pColour);
@@ -1521,8 +1582,8 @@ void DrawRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int 
 }
 
 // IDA: void __usercall DrawRRectangle(br_pixelmap *pPixelmap@<EAX>, int pLeft@<EDX>, int pTop@<EBX>, int pRight@<ECX>, int pBottom, int pColour)
+// FUNCTION: CARM95 0x004c7aec
 void DrawRRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int pBottom, int pColour) {
-    LOG_TRACE("(%p, %d, %d, %d, %d, %d)", pPixelmap, pLeft, pTop, pRight, pBottom, pColour);
 
     BrPixelmapLine(pPixelmap, pLeft + 1, pTop, pRight - 1, pTop, pColour);
     BrPixelmapLine(pPixelmap, pLeft + 1, pBottom, pRight - 1, pBottom, pColour);
@@ -1531,6 +1592,7 @@ void DrawRRectangle(br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int
 }
 
 // IDA: void __usercall OoerrIveGotTextInMeBoxMissus(int pFont_index@<EAX>, char *pText@<EDX>, br_pixelmap *pPixelmap@<EBX>, int pLeft@<ECX>, int pTop, int pRight, int pBottom, int pCentred)
+// FUNCTION: CARM95 0x004c7b7f
 void OoerrIveGotTextInMeBoxMissus(int pFont_index, char* pText, br_pixelmap* pPixelmap, int pLeft, int pTop, int pRight, int pBottom, int pCentred) {
     tDR_font* font;
     int width;
@@ -1543,7 +1605,6 @@ void OoerrIveGotTextInMeBoxMissus(int pFont_index, char* pText, br_pixelmap* pPi
     int current_y;
     int font_needed_loading;
     char line[256];
-    LOG_TRACE("(%d, \"%s\", %p, %d, %d, %d, %d, %d)", pFont_index, pText, pPixelmap, pLeft, pTop, pRight, pBottom, pCentred);
 
     font = &gFonts[pFont_index];
     current_width = 0;
@@ -1604,17 +1665,17 @@ void OoerrIveGotTextInMeBoxMissus(int pFont_index, char* pText, br_pixelmap* pPi
 }
 
 // IDA: void __usercall TransBrPixelmapText(br_pixelmap *pPixelmap@<EAX>, int pX@<EDX>, int pY@<EBX>, br_uint_32 pColour@<ECX>, br_font *pFont, signed char *pText)
+// FUNCTION: CARM95 0x004c7ec5
 void TransBrPixelmapText(br_pixelmap* pPixelmap, int pX, int pY, br_uint_32 pColour, br_font* pFont, char* pText) {
     int len;
-    LOG_TRACE("(%p, %d, %d, %d, %p, %p)", pPixelmap, pX, pY, pColour, pFont, pText);
 
     len = TranslationMode() ? 2 : 0;
     BrPixelmapText(pPixelmap, pX, pY - len, pColour, pFont, (char*)pText);
 }
 
 // IDA: void __usercall TransDRPixelmapText(br_pixelmap *pPixelmap@<EAX>, int pX@<EDX>, int pY@<EBX>, tDR_font *pFont@<ECX>, char *pText, int pRight_edge)
+// FUNCTION: CARM95 0x004c7f08
 void TransDRPixelmapText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, char* pText, int pRight_edge) {
-    LOG_TRACE("(%p, %d, %d, %p, \"%s\", %d)", pPixelmap, pX, pY, pFont, pText, pRight_edge);
 
     if (gAusterity_mode && FlicsPlayedFromDisk() && pFont != gCached_font) {
         if (gCached_font != NULL && gCached_font - gFonts > 13) {
@@ -1627,8 +1688,8 @@ void TransDRPixelmapText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont
 }
 
 // IDA: void __usercall TransDRPixelmapCleverText(br_pixelmap *pPixelmap@<EAX>, int pX@<EDX>, int pY@<EBX>, tDR_font *pFont@<ECX>, char *pText, int pRight_edge)
+// FUNCTION: CARM95 0x004c7fd5
 void TransDRPixelmapCleverText(br_pixelmap* pPixelmap, int pX, int pY, tDR_font* pFont, char* pText, int pRight_edge) {
-    LOG_TRACE("(%p, %d, %d, %p, \"%s\", %d)", pPixelmap, pX, pY, pFont, pText, pRight_edge);
 
     if (gAusterity_mode && FlicsPlayedFromDisk() && gCached_font != pFont) {
         if (gCached_font && gCached_font - gFonts > 13) {

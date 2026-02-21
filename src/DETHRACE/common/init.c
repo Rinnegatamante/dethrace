@@ -41,21 +41,42 @@
 
 #include "brender.h"
 
+// GLOBAL: CARM95 0x0052115c
 int gGame_initialized;
+
+// GLOBAL: CARM95 0x00521160
 int gBr_initialized;
+
+// GLOBAL: CARM95 0x00521164
 int gBrZb_initialized;
+
+// GLOBAL: CARM95 0x00521168
 int gInitialisation_finished;
+
+// GLOBAL: CARM95 0x0052116c
 int gRender_indent;
+
+// GLOBAL: CARM95 0x0053fdd0
 tU32 gAustere_time;
+
+// GLOBAL: CARM95 0x0054b2bc
 int gInitial_rank;
+
+// GLOBAL: CARM95 0x0054b2b0
 int gCredits_per_rank[3];
+
+// GLOBAL: CARM95 0x0054b2c0
 int gInitial_credits[3];
+
+// GLOBAL: CARM95 0x0054b2a0
 int gNet_mode_of_last_game;
+
+// GLOBAL: CARM95 0x0054b29c
 br_material* gDefault_track_material;
 
 // IDA: void __cdecl AllocateSelf()
+// FUNCTION: CARM95 0x004bbebf
 void AllocateSelf(void) {
-    LOG_TRACE("()");
 
     gSelf = BrActorAllocate(BR_ACTOR_NONE, NULL);
     if (gSelf == NULL) {
@@ -68,10 +89,10 @@ void AllocateSelf(void) {
 }
 
 // IDA: void __cdecl AllocateCamera()
+// FUNCTION: CARM95 0x004bbf22
 void AllocateCamera(void) {
     br_camera* camera_ptr;
     int i;
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gCamera_list); i++) {
         gCamera_list[i] = BrActorAllocate(BR_ACTOR_CAMERA, NULL);
@@ -116,12 +137,12 @@ void AllocateCamera(void) {
 }
 
 // IDA: void __cdecl ReinitialiseForwardCamera()
+// FUNCTION: CARM95 0x004bb510
 void ReinitialiseForwardCamera(void) {
     br_camera* camera_ptr;
     float the_angle;
     float d;
     float w;
-    LOG_TRACE("()");
 
     camera_ptr = (br_camera*)gCamera->type_data;
     if (gProgram_state.cockpit_on) {
@@ -163,9 +184,9 @@ void ReinitialiseForwardCamera(void) {
 }
 
 // IDA: void __cdecl AllocateRearviewPixelmap()
+// FUNCTION: CARM95 0x004bb741
 void AllocateRearviewPixelmap(void) {
     char* rear_screen_pixels;
-    LOG_TRACE("()");
 
 #ifdef DETHRACE_3DFX_PATCH
     if (gRearview_screen != NULL) {
@@ -214,9 +235,9 @@ void AllocateRearviewPixelmap(void) {
 }
 
 // IDA: void __cdecl ReinitialiseRearviewCamera()
+// FUNCTION: CARM95 0x004bb887
 void ReinitialiseRearviewCamera(void) {
     br_camera* camera_ptr;
-    LOG_TRACE("()");
 
     camera_ptr = gRearview_camera->type_data;
     camera_ptr->field_of_view = BrDegreeToAngle(gProgram_state.current_car.rearview_camera_angle);
@@ -229,10 +250,10 @@ void ReinitialiseRearviewCamera(void) {
 }
 
 // IDA: void __cdecl ReinitialiseRenderStuff()
+// FUNCTION: CARM95 0x004bb916
 void ReinitialiseRenderStuff(void) {
     int x_diff;
     int y_diff;
-    LOG_TRACE("()");
 
     if (gProgram_state.cockpit_on) {
         gProgram_state.current_render_left = gProgram_state.current_car.render_left[gProgram_state.cockpit_image_index];
@@ -260,11 +281,11 @@ void ReinitialiseRenderStuff(void) {
 
 // IDA: void __cdecl InstallFindFailedHooks()
 void InstallFindFailedHooks(void) {
-    LOG_TRACE("()");
     NOT_IMPLEMENTED();
 }
 
 // IDA: void __cdecl AllocateStandardLamp()
+// FUNCTION: CARM95 0x004bbcdb
 void AllocateStandardLamp(void) {
     br_actor* lamp;
     int i;
@@ -282,9 +303,9 @@ void AllocateStandardLamp(void) {
 }
 
 // IDA: void __cdecl InitializeBRenderEnvironment()
+// FUNCTION: CARM95 0x004bbd6c
 void InitializeBRenderEnvironment(void) {
     br_model* arrow_model;
-    LOG_TRACE("()");
 
     gBr_initialized = 1;
     InstallDRMemCalls();
@@ -316,17 +337,16 @@ void InitializeBRenderEnvironment(void) {
 }
 
 // IDA: void __cdecl InitBRFonts()
+// FUNCTION: CARM95 0x004bc12c
 void InitBRFonts(void) {
-    LOG_TRACE("()");
     gBig_font = LoadBRFont("BIGFONT.FNT");
     gFont_7 = LoadBRFont("FONT7.FNT");
     gHeadup_font = LoadBRFont("HEADUP.FNT");
 }
 
 // IDA: void __cdecl AustereWarning()
+// FUNCTION: CARM95 0x004bc16d
 void AustereWarning(void) {
-    LOG_TRACE("()");
-
     ClearEntireScreen();
 
     if (gAusterity_mode) {
@@ -341,20 +361,21 @@ void AustereWarning(void) {
         gAustere_time = PDGetTotalTime();
         DisposeFont(FONT_GRNLIT);
     } else {
-        gAustere_time = gAusterity_mode;
+        gAustere_time = 0;
     }
 }
 
+#ifdef DETHRACE_3DFX_PATCH
+
 // IDA: void __cdecl InitLineStuff()
 void InitLineStuff(void) {
-    LOG_TRACE("()");
 
     // HACK: originally 2 vertices
     gLine_model = BrModelAllocate("gLine_model", 3 /*2*/, 1);
     gLine_material = BrMaterialAllocate("gLine_material");
     gLine_actor = BrActorAllocate(BR_ACTOR_MODEL, NULL);
     if (!gLine_model || !gLine_material || !gLine_actor) {
-        FatalError(94);
+        FatalError(kFatalError_OOMCarmageddon_S);
     }
     gLine_actor->identifier = "gLine_actor";
     gLine_actor->render_style = BR_RSTYLE_EDGES;
@@ -381,13 +402,12 @@ void InitLineStuff(void) {
 void InitSmokeStuff(void) {
     static br_token_value fadealpha[3] = { { BRT_BLEND_B, { .u32 = 1 } }, { BRT_OPACITY_X, { .x = 0x4B0000 } }, { 0 } };
     tPath_name path;
-    LOG_TRACE("()");
 
     gBlend_model = BrModelAllocate("gBlend_model", 4, 2);
     gBlend_material = BrMaterialAllocate("gBlend_material");
     gBlend_actor = BrActorAllocate(BR_ACTOR_MODEL, NULL);
     if (!gBlend_model || !gBlend_material || !gBlend_actor) {
-        FatalError(94);
+        FatalError(kFatalError_OOMCarmageddon_S);
     }
     gBlend_actor->identifier = "gBlend_actor";
     gBlend_actor->model = gBlend_model;
@@ -418,7 +438,7 @@ void InitSmokeStuff(void) {
     PathCat(path, path, "SMOKE.PIX");
     gBlend_material->colour_map = DRPixelmapLoad(path);
     if (!gBlend_material->colour_map) {
-        FatalError(79, path);
+        FatalError(kFatalError_LoadPixelmapFile_S, path);
     }
     gBlend_material->colour_map->map = gRender_palette;
     BrMapAdd(gBlend_material->colour_map);
@@ -442,7 +462,6 @@ void Init2DStuff(void) {
     tPath_name path;
     br_scalar prat_u;
     br_scalar prat_v;
-    LOG_TRACE("()");
 
     g2d_camera = BrActorAllocate(BR_ACTOR_CAMERA, NULL);
     gDim_model = BrModelAllocate("gDim_model", 4, 2);
@@ -452,7 +471,7 @@ void Init2DStuff(void) {
     gPrat_material = BrMaterialAllocate("gPrat_material");
     gPrat_actor = BrActorAllocate(BR_ACTOR_MODEL, NULL);
     if (!gDim_model || !gDim_material || !gDim_actor || !gPrat_model || !gPrat_material || !gPrat_actor || !g2d_camera) {
-        FatalError(94);
+        FatalError(kFatalError_OOMCarmageddon_S);
     }
     g2d_camera->identifier = "g2d_camera";
     camera = g2d_camera->type_data;
@@ -531,7 +550,10 @@ void Init2DStuff(void) {
     gPrat_actor->render_style = BR_RSTYLE_NONE;
 }
 
+#endif
+
 // IDA: void __usercall InitialiseApplication(int pArgc@<EAX>, char **pArgv@<EDX>)
+// FUNCTION: CARM95 0x004bba54
 void InitialiseApplication(int pArgc, char** pArgv) {
 
     if (harness_game_config.gore_check) {
@@ -632,6 +654,7 @@ void InitialiseApplication(int pArgc, char** pArgv) {
 }
 
 // IDA: void __usercall InitialiseDeathRace(int pArgc@<EAX>, char **pArgv@<EDX>)
+// FUNCTION: CARM95 0x004bba24
 void InitialiseDeathRace(int pArgc, char** pArgv) {
     PDInitialiseSystem();
     InitialiseApplication(pArgc, pArgv);
@@ -639,9 +662,9 @@ void InitialiseDeathRace(int pArgc, char** pArgv) {
 }
 
 // IDA: void __usercall InitGame(int pStart_race@<EAX>)
+// FUNCTION: CARM95 0x004bc22c
 void InitGame(int pStart_race) {
     int i;
-    LOG_TRACE("(%d)", pStart_race);
 
     gWaiting_for_unpause = 1;
     gWait_for_it = 1;
@@ -690,9 +713,9 @@ void InitGame(int pStart_race) {
 }
 
 // IDA: void __cdecl DisposeGameIfNecessary()
+// FUNCTION: CARM95 0x004bc3d0
 void DisposeGameIfNecessary(void) {
     int i;
-    LOG_TRACE("()");
 
     if (gNet_mode != eNet_mode_none) {
         NetLeaveGame(gCurrent_net_game);
@@ -713,28 +736,27 @@ void DisposeGameIfNecessary(void) {
 }
 
 // IDA: void __cdecl LoadInTrack()
+// FUNCTION: CARM95 0x004bc93a
 void LoadInTrack(void) {
-    LOG_TRACE("()");
 
     LoadTrack(gProgram_state.track_file_name, &gProgram_state.track_spec, &gCurrent_race);
 }
 
 // IDA: void __cdecl DisposeTrack()
+// FUNCTION: CARM95 0x004bc493
 void DisposeTrack(void) {
-    LOG_TRACE("()");
 
     FreeTrack(&gProgram_state.track_spec);
 }
 
 // IDA: void __usercall CopyMaterialColourFromIndex(br_material *pMaterial@<EAX>)
 void CopyMaterialColourFromIndex(br_material* pMaterial) {
-    LOG_TRACE("(%p)", pMaterial);
     NOT_IMPLEMENTED();
 }
 
 // IDA: void __cdecl InitRace()
+// FUNCTION: CARM95 0x004bc4b1
 void InitRace(void) {
-    LOG_TRACE("()");
 
     SwitchToRealResolution();
     // TODO: dword_5454C4 = 0;
@@ -748,7 +770,7 @@ void InitRace(void) {
     PossibleService();
     // TODO: dword_55142C = 0;
     gStart_race_sent = 0;
-    gProgram_state.frame_rate_headup = NewTextHeadupSlot(eHeadupSlot_development, 0, 0, -1, "");
+    gProgram_state.frame_rate_headup = NewTextHeadupSlot(eHeadupSlot_development, 0, 0, -kFont_ORANGHED, "");
     if (TranslationMode()) {
         if (gAusterity_mode) {
             FlushInterfaceFonts();
@@ -769,15 +791,15 @@ void InitRace(void) {
     gMap_mode = 0;
     gProgram_state.cockpit_image_index = 0;
     if (gNet_mode != eNet_mode_none) {
-        gNet_cash_headup = NewTextHeadupSlot(eHeadupSlot_cash_network, 0, 0, -6, "");
-        gNet_ped_headup = NewTextHeadupSlot(eHeadupSlot_ped_network, 0, 0, -6, "");
+        gNet_cash_headup = NewTextHeadupSlot(eHeadupSlot_cash_network, 0, 0, -kFont_NEWHITE, "");
+        gNet_ped_headup = NewTextHeadupSlot(eHeadupSlot_ped_network, 0, 0, -kFont_NEWHITE, "");
     } else {
-        gCredits_won_headup = NewTextHeadupSlot(eHeadupSlot_credits, 0, 0, -6, "");
-        gPed_kill_count_headup = NewTextHeadupSlot(eHeadupSlot_ped_kills, 0, 0, -6, "");
-        gCar_kill_count_headup = NewTextHeadupSlot(eHeadupSlot_cars_out_count, 0, 0, -6, "");
-        gTimer_headup = NewTextHeadupSlot(eHeadupSlot_timer, 0, 0, -5, "");
-        gTime_awarded_headup = NewTextHeadupSlot(eHeadupSlot_time_award, 0, 0, -2, "");
-        gLaps_headup = NewTextHeadupSlot(eHeadupSlot_lap_count, 0, 0, -6, "");
+        gCredits_won_headup = NewTextHeadupSlot(eHeadupSlot_credits, 0, 0, -kFont_NEWHITE, "");
+        gPed_kill_count_headup = NewTextHeadupSlot(eHeadupSlot_ped_kills, 0, 0, -kFont_NEWHITE, "");
+        gCar_kill_count_headup = NewTextHeadupSlot(eHeadupSlot_cars_out_count, 0, 0, -kFont_NEWHITE, "");
+        gTimer_headup = NewTextHeadupSlot(eHeadupSlot_timer, 0, 0, -kFont_TIMER, "");
+        gTime_awarded_headup = NewTextHeadupSlot(eHeadupSlot_time_award, 0, 0, -kFont_BLUEHEAD, "");
+        gLaps_headup = NewTextHeadupSlot(eHeadupSlot_lap_count, 0, 0, -kFont_NEWHITE, "");
     }
     PossibleService();
     gProgram_state.which_view = eView_forward;
@@ -870,8 +892,8 @@ void InitRace(void) {
 }
 
 // IDA: void __cdecl DisposeRace()
+// FUNCTION: CARM95 0x004bc968
 void DisposeRace(void) {
-    LOG_TRACE("()");
 
     PossibleService();
     DisposePiping();
@@ -912,15 +934,15 @@ void DisposeRace(void) {
 }
 
 // IDA: int __cdecl GetScreenSize()
+// FUNCTION: CARM95 0x004bca25
 int GetScreenSize(void) {
-    LOG_TRACE("()");
 
     return gRender_indent;
 }
 
 // IDA: void __usercall SetScreenSize(int pNew_size@<EAX>)
+// FUNCTION: CARM95 0x004bca3a
 void SetScreenSize(int pNew_size) {
-    LOG_TRACE("(%d)", pNew_size);
 
     gRender_indent = pNew_size;
 }

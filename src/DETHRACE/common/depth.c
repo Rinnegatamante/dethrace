@@ -21,42 +21,101 @@
 #include <stdlib.h>
 
 tDepth_effect gDistance_depth_effects[4];
+
+// GLOBAL: CARM95 0x00513430
 int gSky_on;
+
+// GLOBAL: CARM95 0x00513434
 int gDepth_cueing_on;
+
+// GLOBAL: CARM95 0x00513438
 tDepth_effect_type gSwap_depth_effect_type;
+
+// GLOBAL: CARM95 0x00537930
 br_scalar gSky_height;
+
+// GLOBAL: CARM95 0x0053794c
 br_scalar gSky_x_multiplier;
+
+// GLOBAL: CARM95 0x00537944
 br_scalar gSky_width;
+
+// GLOBAL: CARM95 0x00537950
 br_scalar gSky_y_multiplier;
+
 tU32 gLast_depth_change;
+
+// GLOBAL: CARM95 0x00537934
 br_scalar gOld_yon;
+
+// GLOBAL: CARM95 0x00550a68
 br_pixelmap* gWater_shade_table;
+
+// GLOBAL: CARM95 0x0053795c
 br_material* gHorizon_material;
+
+// GLOBAL: CARM95 0x0053792c
 br_model* gRearview_sky_model;
+
+// GLOBAL: CARM95 0x00537924
 int gFog_shade_table_power;
+
+// GLOBAL: CARM95 0x0053793c
 br_actor* gRearview_sky_actor;
+
+// GLOBAL: CARM95 0x00537958
 int gAcid_shade_table_power;
+
+// GLOBAL: CARM95 0x00537948
 int gWater_shade_table_power;
+
+// GLOBAL: CARM95 0x00537920
 br_model* gForward_sky_model;
+
+// GLOBAL: CARM95 0x00537954
 br_actor* gForward_sky_actor;
+
+// GLOBAL: CARM95 0x00537938
 int gDepth_shade_table_power;
+
+// GLOBAL: CARM95 0x00550a74
 br_pixelmap* gFog_shade_table;
+
+// GLOBAL: CARM95 0x00550a80
 int gSwap_depth_effect_start;
+
+// GLOBAL: CARM95 0x00550a60
 br_pixelmap* gDepth_shade_table;
+
+// GLOBAL: CARM95 0x00550a78
 tSpecial_volume* gLast_camera_special_volume;
+
+// GLOBAL: CARM95 0x00550a64
 br_pixelmap* gAcid_shade_table;
+
+// GLOBAL: CARM95 0x00550a7c
 int gSwap_depth_effect_end;
+
+// GLOBAL: CARM95 0x00550a5c
 br_pixelmap* gSwap_sky_texture;
+
+// GLOBAL: CARM95 0x00537928
 br_angle gOld_fov;
+
+// GLOBAL: CARM95 0x00550a6e
 br_angle gSky_image_width;
+
+// GLOBAL: CARM95 0x00550a6c
 br_angle gSky_image_height;
+
+// GLOBAL: CARM95 0x00550a70
 br_angle gSky_image_underground;
 
 // IDA: int __usercall Log2@<EAX>(int pNumber@<EAX>)
+// FUNCTION: CARM95 0x00461e02
 int Log2(int pNumber) {
     int i;
     int bits[16];
-    LOG_TRACE("(%d)", pNumber);
 
     bits[0] = 1;
     bits[1] = 2;
@@ -83,11 +142,11 @@ int Log2(int pNumber) {
 }
 
 // IDA: br_scalar __cdecl CalculateWrappingMultiplier(br_scalar pValue, br_scalar pYon)
+// FUNCTION: CARM95 0x00462ebc
 br_scalar CalculateWrappingMultiplier(br_scalar pValue, br_scalar pYon) {
     br_scalar k;
     br_scalar trunc_k;
     int int_k;
-    LOG_TRACE("(%f, %f)", pValue, pYon);
 
     k = pYon * 1.3f * TAU / pValue;
     int_k = (int)k;
@@ -101,16 +160,14 @@ br_scalar CalculateWrappingMultiplier(br_scalar pValue, br_scalar pYon) {
 
 // IDA: br_scalar __usercall DepthCueingShiftToDistance@<ST0>(int pShift@<EAX>)
 br_scalar DepthCueingShiftToDistance(int pShift) {
-    LOG_TRACE("(%d)", pShift);
 
-    return powf(10.0f, pShift * 0.1f) * gCamera_yon;
+    return pow(10.0f, pShift * 0.1f) * gCamera_yon;
 }
 
 // IDA: void __usercall FogAccordingToGPSCDE(br_material *pMaterial@<EAX>)
 void FogAccordingToGPSCDE(br_material* pMaterial) {
     int start;
     int end;
-    LOG_TRACE("(%p)", pMaterial);
 
     start = gProgram_state.current_depth_effect.start;
     end = gProgram_state.current_depth_effect.end;
@@ -140,7 +197,6 @@ void FogAccordingToGPSCDE(br_material* pMaterial) {
 void FrobFog(void) {
     int i;
     br_material* mat;
-    LOG_TRACE("()");
 
     if (gTrack_actor) {
         ProcessMaterials(gTrack_actor, (tPMFM2CB*)FogAccordingToGPSCDE);
@@ -165,8 +221,8 @@ void FrobFog(void) {
 }
 
 // IDA: void __usercall InstantDepthChange(tDepth_effect_type pType@<EAX>, br_pixelmap *pSky_texture@<EDX>, int pStart@<EBX>, int pEnd@<ECX>)
+// FUNCTION: CARM95 0x00461670
 void InstantDepthChange(tDepth_effect_type pType, br_pixelmap* pSky_texture, int pStart, int pEnd) {
-    LOG_TRACE("(%d, %p, %d, %d)", pType, pSky_texture, pStart, pEnd);
 
     if (pType == -1) {
         pStart = 3;
@@ -191,26 +247,27 @@ void InstantDepthChange(tDepth_effect_type pType, br_pixelmap* pSky_texture, int
 }
 
 // IDA: br_scalar __cdecl Tan(br_scalar pAngle)
+// FUNCTION: CARM95 0x00462226
 br_scalar Tan(br_scalar pAngle) {
-    LOG_TRACE("(%f)", pAngle);
 
-    return sinf(BrAngleToRadian(pAngle)) / cosf(BrAngleToRadian(pAngle));
+    return sin(BrAngleToRadian(pAngle)) / cos(BrAngleToRadian(pAngle));
 }
 
 // IDA: br_scalar __usercall EdgeU@<ST0>(br_angle pSky@<EAX>, br_angle pView@<EDX>, br_angle pPerfect@<EBX>)
+// FUNCTION: CARM95 0x00462f34
 br_scalar EdgeU(br_angle pSky, br_angle pView, br_angle pPerfect) {
     br_scalar a;
     br_scalar b;
     br_scalar c;
-    LOG_TRACE("(%d, %d, %d)", pSky, pView, pPerfect);
 
-    a = cosf(BrAngleToRadian(pPerfect));
-    b = sinf(BrAngleToRadian(pView));
-    c = cosf(BrAngleToRadian(pView));
-    return b * a * a / (BrAngleToRadian(pSky) * (1.f + c));
+    a = BR_COS(pPerfect) * BR_COS(pPerfect);
+    b = BR_SIN(pView);
+    c = (BR_COS(pView) + 1.0f) * BrAngleToRadian(pSky);
+    return b * a / c;
 }
 
 // IDA: void __usercall MungeSkyModel(br_actor *pCamera@<EAX>, br_model *pModel@<EDX>)
+// FUNCTION: CARM95 0x0046280d
 void MungeSkyModel(br_actor* pCamera, br_model* pModel) {
     br_camera* camera_data;
     br_scalar horizon_half_height;
@@ -229,15 +286,14 @@ void MungeSkyModel(br_actor* pCamera, br_model* pModel) {
     br_angle min_angle;
     br_angle angle_range;
     br_angle angle;
-    LOG_TRACE("(%p, %p)", pCamera, pModel);
 
     camera_data = pCamera->type_data;
     tan_half_fov = Tan(camera_data->field_of_view / 2);
     sky_distance = camera_data->yon_z - 1.f;
     horizon_half_width = sky_distance * tan_half_fov;
     horizon_half_height = horizon_half_width * camera_data->aspect;
-    horizon_half_diag = sqrtf(horizon_half_height * horizon_half_height + horizon_half_width * horizon_half_width);
-    half_diag_fov = BrRadianToAngle(atan2f(horizon_half_diag, sky_distance));
+    horizon_half_diag = sqrt(horizon_half_height * horizon_half_height + horizon_half_width * horizon_half_width);
+    half_diag_fov = BrRadianToAngle(atan2(horizon_half_diag, sky_distance));
     edge_u = EdgeU(gSky_image_width, 2 * half_diag_fov, BR_ANGLE_DEG(10));
     narrow_u = edge_u / 2.f;
     gSky_width = horizon_half_width * 2.f;
@@ -274,24 +330,24 @@ void MungeSkyModel(br_actor* pCamera, br_model* pModel) {
     for (band = 0; band < 2u; band++) {
         vertex = 4 * band;
         angle = -BR_ANGLE_DEG(90) - half_diag_fov + angle_range * band / 2;
-        pModel->vertices[vertex].p.v[1] = sinf(BrAngleToRadian(angle)) * sky_distance;
-        pModel->vertices[vertex].p.v[2] = -cosf(BrAngleToRadian(angle)) * sky_distance;
+        pModel->vertices[vertex].p.v[1] = sin(BrAngleToRadian(angle)) * sky_distance;
+        pModel->vertices[vertex].p.v[2] = -cos(BrAngleToRadian(angle)) * sky_distance;
     }
     min_angle = -gSky_image_underground;
     angle_range = gSky_image_height;
     nbands = 18;
     for (band = 0; band < nbands; band++) {
         vertex = 4 * band + 8;
-        pModel->vertices[vertex].p.v[1] = sinf(BrAngleToRadian(min_angle + angle_range * band / nbands)) * sky_distance;
-        pModel->vertices[vertex].p.v[2] = -cosf(BrAngleToRadian(min_angle + angle_range * band / nbands)) * sky_distance;
+        pModel->vertices[vertex].p.v[1] = sin(BrAngleToRadian(min_angle + angle_range * band / nbands)) * sky_distance;
+        pModel->vertices[vertex].p.v[2] = -cos(BrAngleToRadian(min_angle + angle_range * band / nbands)) * sky_distance;
     }
     min_angle = gSky_image_height - gSky_image_underground;
     angle_range = half_diag_fov + BR_ANGLE_DEG(90) - (gSky_image_height - gSky_image_underground);
     for (band = 0; band <= 1u; band++) {
         vertex = 4 * band + 80;
         angle = min_angle + angle_range * band;
-        pModel->vertices[vertex].p.v[1] = sinf(BrAngleToRadian(angle)) * sky_distance;
-        pModel->vertices[vertex].p.v[2] = -cosf(BrAngleToRadian(angle)) * sky_distance;
+        pModel->vertices[vertex].p.v[1] = sin(BrAngleToRadian(angle)) * sky_distance;
+        pModel->vertices[vertex].p.v[2] = -cos(BrAngleToRadian(angle)) * sky_distance;
     }
     PossibleService();
     for (band = 0; band <= 21u; ++band) {
@@ -306,13 +362,13 @@ void MungeSkyModel(br_actor* pCamera, br_model* pModel) {
 }
 
 // IDA: br_model* __usercall CreateHorizonModel@<EAX>(br_actor *pCamera@<EAX>)
+// FUNCTION: CARM95 0x0046194b
 br_model* CreateHorizonModel(br_actor* pCamera) {
     tU8 nbands;
     tU8 band;
     tU8 vertex;
     tU8 stripe;
     br_model* model;
-    LOG_TRACE("(%p)", pCamera);
 
     model = BrModelAllocate(NULL, 88, 126);
     model->flags |= BR_MODF_KEEP_ORIGINAL;
@@ -346,12 +402,12 @@ br_model* CreateHorizonModel(br_actor* pCamera) {
 }
 
 // IDA: void __usercall LoadDepthTable(char *pName@<EAX>, br_pixelmap **pTable@<EDX>, int *pPower@<EBX>)
+// FUNCTION: CARM95 0x00461c9b
 void LoadDepthTable(char* pName, br_pixelmap** pTable, int* pPower) {
     tPath_name the_path;
     int i;
     int j;
     tU8 temp;
-    LOG_TRACE("(\"%s\", %p, %p)", pName, pTable, pPower);
 
 #define PTABLE_PIXEL_AT(X, Y) ((tU8*)((*pTable)->pixels))[(X) + (Y) * (*pTable)->row_bytes]
 
@@ -374,6 +430,7 @@ void LoadDepthTable(char* pName, br_pixelmap** pTable, int* pPower) {
 }
 
 // IDA: void __cdecl InitDepthEffects()
+// FUNCTION: CARM95 0x004616f2
 void InitDepthEffects(void) {
     tPath_name the_path;
     int i;
@@ -388,7 +445,12 @@ void InitDepthEffects(void) {
     PathCat(the_path, the_path, "HORIZON.MAT");
     gHorizon_material = BrMaterialLoad(the_path);
     if (gHorizon_material == NULL) {
-        FatalError(kFatalError_FindSkyMaterial_S, "HORIZON.MAT"); // 2nd argument added
+        FatalError(kFatalError_FindSkyMaterial_S
+#ifdef DETHRACE_FIX_BUGS
+            ,
+            "HORIZON.MAT"
+#endif
+        );
     }
 #ifdef DETHRACE_3DFX_PATCH
     if (gScreen->type == BR_PMT_INDEX_8 && !gMaterial_fogging)
@@ -422,6 +484,7 @@ void InitDepthEffects(void) {
 }
 
 // IDA: void __usercall DoDepthByShadeTable(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>, br_pixelmap *pShade_table@<EBX>, int pShade_table_power@<ECX>, int pStart, int pEnd)
+// FUNCTION: CARM95 0x004622cc
 void DoDepthByShadeTable(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_pixelmap* pShade_table, int pShade_table_power, int pStart, int pEnd) {
     tU8* render_ptr;
     tU8* shade_table_pixels;
@@ -434,7 +497,6 @@ void DoDepthByShadeTable(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer
     int x;
     int depth_line_skip;
     int render_line_skip;
-    LOG_TRACE("(%p, %p, %p, %d, %d, %d)", pRender_buffer, pDepth_buffer, pShade_table, pShade_table_power, pStart, pEnd);
 
     too_near = 0xffff - (1 << pStart);
     shade_table_pixels = pShade_table->pixels;
@@ -450,7 +512,7 @@ void DoDepthByShadeTable(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer
                 for (x = 0; x < pRender_buffer->width; ++x) {
                     if (*depth_ptr != 0xFFFF) {
                         depth_value = *depth_ptr - too_near;
-                        if (depth_value < -(int16_t)too_near) {
+                        if (depth_value < -(tS16)too_near) {
                             *render_ptr = shade_table_pixels[(depth_value & 0xFF00) + *render_ptr];
                         }
                     }
@@ -465,7 +527,7 @@ void DoDepthByShadeTable(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer
                 for (x = 0; pRender_buffer->width > x; ++x) {
                     if (*depth_ptr != 0xFFFF) {
                         depth_value = *depth_ptr - too_near;
-                        if (depth_value < -(int16_t)too_near) {
+                        if (depth_value < -(tS16)too_near) {
                             *render_ptr = shade_table_pixels[*render_ptr + ((depth_value >> (pEnd - (pShade_table_power + 8 - pStart))) & 0xFF00)];
                         }
                     }
@@ -481,7 +543,7 @@ void DoDepthByShadeTable(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer
             for (x = 0; pRender_buffer->width > x; ++x) {
                 if (*depth_ptr != 0xFFFF) {
                     depth_value = *depth_ptr - too_near;
-                    if (depth_value < -(int16_t)too_near) {
+                    if (depth_value < -(tS16)too_near) {
                         *render_ptr = shade_table_pixels[*render_ptr + ((depth_value << depth_shift_amount) & 0xFF00)];
                     }
                 }
@@ -495,6 +557,7 @@ void DoDepthByShadeTable(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer
 }
 
 // IDA: void __usercall ExternalSky(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>, br_actor *pCamera@<EBX>, br_matrix34 *pCamera_to_world@<ECX>)
+// FUNCTION: CARM95 0x00461ebd
 void ExternalSky(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_actor* pCamera, br_matrix34* pCamera_to_world) {
     int dst_x;
     int src_x;
@@ -517,7 +580,6 @@ void ExternalSky(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_act
     int bot_height;
     int repetitions;
     br_pixelmap* col_map;
-    LOG_TRACE("(%p, %p, %p, %p)", pRender_buffer, pDepth_buffer, pCamera, pCamera_to_world);
 
     dst_x = 0;
     col_map = gHorizon_material->colour_map;
@@ -539,7 +601,7 @@ void ExternalSky(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_act
     }
 
     hshift = col_map->height - gSky_image_underground * col_map->height / gSky_image_height;
-    tan_pitch = sqrtf(pCamera_to_world->m[2][0] * pCamera_to_world->m[2][0] + pCamera_to_world->m[2][2] * pCamera_to_world->m[2][2]);
+    tan_pitch = sqrt(pCamera_to_world->m[2][0] * pCamera_to_world->m[2][0] + pCamera_to_world->m[2][2] * pCamera_to_world->m[2][2]);
     hori_y = -(pCamera_to_world->m[2][1]
                  / tan_pitch
                  / tan_half_fov * pRender_buffer->height / 2.0f)
@@ -571,12 +633,12 @@ void ExternalSky(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_act
 #define ACTOR_CAMERA(ACTOR) ((br_camera*)((ACTOR)->type_data))
 
 // IDA: void __usercall DoHorizon(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>, br_actor *pCamera@<EBX>, br_matrix34 *pCamera_to_world@<ECX>)
+// FUNCTION: CARM95 0x00462658
 void DoHorizon(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_actor* pCamera, br_matrix34* pCamera_to_world) {
     br_angle yaw;
     br_actor* actor;
-    LOG_TRACE("(%p, %p, %p, %p)", pRender_buffer, pDepth_buffer, pCamera, pCamera_to_world);
 
-    yaw = BrRadianToAngle(atan2f(pCamera_to_world->m[2][0], pCamera_to_world->m[2][2]));
+    yaw = BrRadianToAngle(atan2(pCamera_to_world->m[2][0], pCamera_to_world->m[2][2]));
     if (!gProgram_state.cockpit_on && !gAction_replay_mode && gAction_replay_camera_mode != eAction_replay_standard
 
 #ifdef DETHRACE_3DFX_PATCH
@@ -611,8 +673,8 @@ void DoHorizon(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_actor
 }
 
 // IDA: void __usercall DoDepthCue(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>)
+// FUNCTION: CARM95 0x00462299
 void DoDepthCue(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer) {
-    LOG_TRACE("(%p, %p)", pRender_buffer, pDepth_buffer);
 
     DoDepthByShadeTable(
         pRender_buffer,
@@ -624,8 +686,8 @@ void DoDepthCue(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer) {
 }
 
 // IDA: void __usercall DoFog(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>)
+// FUNCTION: CARM95 0x004625d6
 void DoFog(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer) {
-    LOG_TRACE("(%p, %p)", pRender_buffer, pDepth_buffer);
 
     DoDepthByShadeTable(
         pRender_buffer,
@@ -637,8 +699,8 @@ void DoFog(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer) {
 }
 
 // IDA: void __usercall DepthEffect(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>, br_actor *pCamera@<EBX>, br_matrix34 *pCamera_to_world@<ECX>)
+// FUNCTION: CARM95 0x00462254
 void DepthEffect(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_actor* pCamera, br_matrix34* pCamera_to_world) {
-    LOG_TRACE("(%p, %p, %p, %p)", pRender_buffer, pDepth_buffer, pCamera, pCamera_to_world);
 
 #ifdef DETHRACE_3DFX_PATCH
     if (gMaterial_fogging) {
@@ -654,8 +716,8 @@ void DepthEffect(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_act
 }
 
 // IDA: void __usercall DepthEffectSky(br_pixelmap *pRender_buffer@<EAX>, br_pixelmap *pDepth_buffer@<EDX>, br_actor *pCamera@<EBX>, br_matrix34 *pCamera_to_world@<ECX>)
+// FUNCTION: CARM95 0x00462609
 void DepthEffectSky(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_actor* pCamera, br_matrix34* pCamera_to_world) {
-    LOG_TRACE("(%p, %p, %p, %p)", pRender_buffer, pDepth_buffer, pCamera, pCamera_to_world);
 
     if (gProgram_state.current_depth_effect.sky_texture != NULL
         && (gLast_camera_special_volume == NULL || gLast_camera_special_volume->sky_col < 0)) {
@@ -664,27 +726,45 @@ void DepthEffectSky(br_pixelmap* pRender_buffer, br_pixelmap* pDepth_buffer, br_
 }
 
 // IDA: void __usercall DoWobbleCamera(br_actor *pCamera@<EAX>)
+// FUNCTION: CARM95 0x00463066
 void DoWobbleCamera(br_actor* pCamera) {
     float f_time;
+    // GLOBAL: CARM95 0x51343c
     static br_scalar mag00 = 0.02f;
+    // GLOBAL: CARM95 0x513440
     static br_scalar mag01 = 0.02f;
+    // GLOBAL: CARM95 0x513444
     static br_scalar mag02 = 0.02f;
+    // GLOBAL: CARM95 0x513448
     static br_scalar mag10 = 0.15f;
+    // GLOBAL: CARM95 0x51344c
     static br_scalar mag11 = 0.05f;
+    // GLOBAL: CARM95 0x513450
     static br_scalar mag12 = 0.02f;
+    // GLOBAL: CARM95 0x513454
     static br_scalar mag20 = 0.f;
+    // GLOBAL: CARM95 0x513458
     static br_scalar mag21 = 0.f;
+    // GLOBAL: CARM95 0x51345c
     static br_scalar mag22 = 0.f;
+    // GLOBAL: CARM95 0x513460
     static float period00 = 3000.f;
+    // GLOBAL: CARM95 0x513464
     static float period01 = 3000.f;
+    // GLOBAL: CARM95 0x513468
     static float period02 = 4000.f;
+    // GLOBAL: CARM95 0x51346c
     static float period10 = 2200.f;
+    // GLOBAL: CARM95 0x513470
     static float period11 = 3300.f;
+    // GLOBAL: CARM95 0x513474
     static float period12 = 3100.f;
+    // GLOBAL: CARM95 0x513478
     static float period20 = 2800.f;
+    // GLOBAL: CARM95 0x51347c
     static float period21 = 2500.f;
+    // GLOBAL: CARM95 0x513480
     static float period22 = 3900.f;
-    LOG_TRACE("(%p)", pCamera);
 
     f_time = (float)PDGetTotalTime();
     pCamera->t.t.mat.m[0][0] += FastScalarSin(fmod(f_time / period00 * 360.f, 360.f)) * mag00;
@@ -699,27 +779,45 @@ void DoWobbleCamera(br_actor* pCamera) {
 }
 
 // IDA: void __usercall DoDrugWobbleCamera(br_actor *pCamera@<EAX>)
+// FUNCTION: CARM95 0x00463289
 void DoDrugWobbleCamera(br_actor* pCamera) {
     float f_time;
+    // GLOBAL: CARM95 0x513484
     static br_scalar mag00 = 0.03f;
+    // GLOBAL: CARM95 0x513488
     static br_scalar mag01 = 0.03f;
+    // GLOBAL: CARM95 0x51348c
     static br_scalar mag02 = 0.03f;
+    // GLOBAL: CARM95 0x513490
     static br_scalar mag10 = 0.2f;
+    // GLOBAL: CARM95 0x513494
     static br_scalar mag11 = 0.07;
+    // GLOBAL: CARM95 0x513498
     static br_scalar mag12 = 0.03f;
+    // GLOBAL: CARM95 0x51349c
     static br_scalar mag20 = 0.02f;
+    // GLOBAL: CARM95 0x5134a0
     static br_scalar mag21 = 0.03f;
+    // GLOBAL: CARM95 0x5134a4
     static br_scalar mag22 = 0.01f;
+    // GLOBAL: CARM95 0x5134a8
     static float period00 = 550.f;
+    // GLOBAL: CARM95 0x5134ac
     static float period01 = 700.f;
+    // GLOBAL: CARM95 0x5134b0
     static float period02 = 200.f;
+    // GLOBAL: CARM95 0x5134b4
     static float period10 = 100.f;
+    // GLOBAL: CARM95 0x5134b8
     static float period11 = 1300.f;
+    // GLOBAL: CARM95 0x5134bc
     static float period12 = 500.f;
+    // GLOBAL: CARM95 0x5134c0
     static float period20 = 800.f;
+    // GLOBAL: CARM95 0x5134c4
     static float period21 = 1500.f;
+    // GLOBAL: CARM95 0x5134c8
     static float period22 = 300.f;
-    LOG_TRACE("(%p)", pCamera);
 
     f_time = (float)PDGetTotalTime();
     pCamera->t.t.mat.m[0][0] += FastScalarSin(fmod(f_time / period00 * 360.f, 360.f)) * mag00;
@@ -734,8 +832,8 @@ void DoDrugWobbleCamera(br_actor* pCamera) {
 }
 
 // IDA: void __usercall DoSpecialCameraEffect(br_actor *pCamera@<EAX>, br_matrix34 *pCamera_to_world@<EDX>)
+// FUNCTION: CARM95 0x00462fdb
 void DoSpecialCameraEffect(br_actor* pCamera, br_matrix34* pCamera_to_world) {
-    LOG_TRACE("(%p, %p)", pCamera, pCamera_to_world);
 
     if (gOn_drugs) {
         DoDrugWobbleCamera(pCamera);
@@ -750,62 +848,62 @@ void DoSpecialCameraEffect(br_actor* pCamera, br_matrix34* pCamera_to_world) {
 }
 
 // IDA: void __cdecl LessDepthFactor()
+// FUNCTION: CARM95 0x004634ac
 void LessDepthFactor(void) {
     char s[256];
-    LOG_TRACE("()");
 
     if (gProgram_state.current_depth_effect.start > 3) {
         gProgram_state.current_depth_effect.start--;
     }
     sprintf(s, "Depth start reduced to %d", gProgram_state.current_depth_effect.start);
-    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, s);
+    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, s);
     gProgram_state.default_depth_effect.start = gProgram_state.current_depth_effect.start;
 }
 
 // IDA: void __cdecl MoreDepthFactor()
+// FUNCTION: CARM95 0x0046350e
 void MoreDepthFactor(void) {
     char s[256];
-    LOG_TRACE("()");
 
-    if (gProgram_state.current_depth_effect.start < 14) {
+    if (gProgram_state.current_depth_effect.start < 13) {
         gProgram_state.current_depth_effect.start++;
     }
     sprintf(s, "Depth start increased to %d", gProgram_state.current_depth_effect.start);
-    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, s);
+    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, s);
     gProgram_state.default_depth_effect.start = gProgram_state.current_depth_effect.start;
 }
 
 // IDA: void __cdecl LessDepthFactor2()
+// FUNCTION: CARM95 0x00463570
 void LessDepthFactor2(void) {
     char s[256];
-    LOG_TRACE("()");
 
-    if (gProgram_state.current_depth_effect.end < 14) {
+    if (gProgram_state.current_depth_effect.end < 13) {
         gProgram_state.current_depth_effect.end++;
     }
     sprintf(s, "Depth end reduced to %d", gProgram_state.current_depth_effect.end);
-    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, s);
+    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, s);
     gProgram_state.default_depth_effect.end = gProgram_state.current_depth_effect.end;
 }
 
 // IDA: void __cdecl MoreDepthFactor2()
+// FUNCTION: CARM95 0x004635d2
 void MoreDepthFactor2(void) {
     char s[256];
-    LOG_TRACE("()");
 
     if (gProgram_state.current_depth_effect.end > 0) {
         gProgram_state.current_depth_effect.end--;
     }
     sprintf(s, "Depth end increased to %d", gProgram_state.current_depth_effect.end);
-    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, s);
+    NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, s);
     gProgram_state.default_depth_effect.end = gProgram_state.current_depth_effect.end;
 }
 
 // IDA: void __cdecl AssertYons()
+// FUNCTION: CARM95 0x00463634
 void AssertYons(void) {
     br_camera* camera_ptr;
     int i;
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gCamera_list); ++i) {
         camera_ptr = gCamera_list[i]->type_data;
@@ -814,26 +912,26 @@ void AssertYons(void) {
 }
 
 // IDA: void __cdecl IncreaseYon()
+// FUNCTION: CARM95 0x00463682
 void IncreaseYon(void) {
     br_camera* camera_ptr;
     int i;
     char s[256];
-    LOG_TRACE("()");
 
     gCamera_yon = gCamera_yon + 5.f;
     AssertYons();
     camera_ptr = gCamera_list[1]->type_data;
     i = (int)camera_ptr->yon_z;
     sprintf(s, GetMiscString(kMiscString_YonIncreasedTo_D), i);
-    NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, s);
+    NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, s);
 }
 
 // IDA: void __cdecl DecreaseYon()
+// FUNCTION: CARM95 0x004636ef
 void DecreaseYon(void) {
     br_camera* camera_ptr;
     int i;
     char s[256];
-    LOG_TRACE("()");
 
     gCamera_yon = gCamera_yon - 5.f;
     if (gCamera_yon < 5.f) {
@@ -843,20 +941,20 @@ void DecreaseYon(void) {
     camera_ptr = gCamera_list[1]->type_data;
     i = (int)camera_ptr->yon_z;
     sprintf(s, GetMiscString(kMiscString_YonDecreasedTo_D), i);
-    NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, s);
+    NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, s);
 }
 
 // IDA: void __cdecl SetYon(br_scalar pYon)
+// FUNCTION: CARM95 0x00463777
 void SetYon(br_scalar pYon) {
     int i;
     br_camera* camera_ptr;
-    LOG_TRACE("(%d)", pYon);
 
     if (pYon < 5.0f) {
         pYon = 5.0f;
     }
 
-    for (i = 0; i < COUNT_OF(gCamera_list); i++) {
+    for (i = 0; i < BR_ASIZE(gCamera_list); i++) {
         if (gCamera_list[i]) {
             camera_ptr = gCamera_list[i]->type_data;
             camera_ptr->yon_z = pYon;
@@ -866,18 +964,18 @@ void SetYon(br_scalar pYon) {
 }
 
 // IDA: br_scalar __cdecl GetYon()
+// FUNCTION: CARM95 0x004637f0
 br_scalar GetYon(void) {
-    LOG_TRACE("()");
 
     return gCamera_yon;
 }
 
 // IDA: void __cdecl IncreaseAngle()
+// FUNCTION: CARM95 0x00463806
 void IncreaseAngle(void) {
     br_camera* camera_ptr;
     int i;
     char s[256];
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gCamera_list); i++) {
         camera_ptr = gCamera_list[i]->type_data;
@@ -890,16 +988,16 @@ void IncreaseAngle(void) {
 #else
         sprintf(s, "Camera angle increased to %d", gProgram_state.current_depth_effect.end);
 #endif
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, s);
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, s);
     }
 }
 
 // IDA: void __cdecl DecreaseAngle()
+// FUNCTION: CARM95 0x004638c8
 void DecreaseAngle(void) {
     br_camera* camera_ptr;
     int i;
     char s[256];
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gCamera_list); i++) {
         camera_ptr = gCamera_list[i]->type_data;
@@ -912,43 +1010,43 @@ void DecreaseAngle(void) {
 #else
         sprintf(s, "Camera angle decreased to %d", gProgram_state.current_depth_effect.end);
 #endif
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, s);
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, s);
     }
 }
 
 // IDA: void __cdecl ToggleDepthMode()
+// FUNCTION: CARM95 0x0046398a
 void ToggleDepthMode(void) {
-    LOG_TRACE("()");
 
     switch (gProgram_state.current_depth_effect.type) {
     case eDepth_effect_none:
         InstantDepthChange(eDepth_effect_darkness, gProgram_state.current_depth_effect.sky_texture, 8, 0);
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, "Darkness mode");
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, "Darkness mode");
         break;
     case eDepth_effect_darkness:
         InstantDepthChange(eDepth_effect_none, gProgram_state.current_depth_effect.sky_texture, 0, 0);
         InstantDepthChange(eDepth_effect_fog, gProgram_state.current_depth_effect.sky_texture, 10, 0);
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, "Fog mode");
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, "Fog mode");
         break;
     case eDepth_effect_fog:
         InstantDepthChange(eDepth_effect_none, gProgram_state.current_depth_effect.sky_texture, 0, 0);
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -1, "Depth effects disabled");
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 500, -kFont_ORANGHED, "Depth effects disabled");
         break;
     }
     gProgram_state.default_depth_effect.type = gProgram_state.current_depth_effect.type;
 }
 
 // IDA: int __cdecl GetSkyTextureOn()
+// FUNCTION: CARM95 0x00463a7e
 int GetSkyTextureOn(void) {
-    LOG_TRACE("()");
 
     return gSky_on;
 }
 
 // IDA: void __usercall SetSkyTextureOn(int pOn@<EAX>)
+// FUNCTION: CARM95 0x00463a93
 void SetSkyTextureOn(int pOn) {
     br_pixelmap* tmp;
-    LOG_TRACE("(%d)", pOn);
 
     if (pOn != gSky_on) {
         tmp = gProgram_state.current_depth_effect.sky_texture;
@@ -967,9 +1065,9 @@ void SetSkyTextureOn(int pOn) {
 }
 
 // IDA: void __cdecl ToggleSkyQuietly()
+// FUNCTION: CARM95 0x00463aba
 void ToggleSkyQuietly(void) {
     br_pixelmap* temp;
-    LOG_TRACE("()");
 
     temp = gProgram_state.current_depth_effect.sky_texture;
     gProgram_state.current_depth_effect.sky_texture = gSwap_sky_texture;
@@ -984,28 +1082,28 @@ void ToggleSkyQuietly(void) {
 }
 
 // IDA: void __cdecl ToggleSky()
+// FUNCTION: CARM95 0x00463b27
 void ToggleSky(void) {
-    LOG_TRACE("()");
 
     SetSkyTextureOn(!GetSkyTextureOn());
     if (gProgram_state.current_depth_effect.sky_texture != NULL) {
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, GetMiscString(kMiscString_SkyTextureOn));
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, GetMiscString(kMiscString_SkyTextureOn));
     } else if (gSwap_sky_texture != NULL) {
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, GetMiscString(kMiscString_SkyTextureOff));
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, GetMiscString(kMiscString_SkyTextureOff));
     } else {
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, GetMiscString(kMiscString_ThereIsNoSkyTextureForThisRace));
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, GetMiscString(kMiscString_ThereIsNoSkyTextureForThisRace));
     }
 }
 
 // IDA: int __cdecl GetDepthCueingOn()
+// FUNCTION: CARM95 0x00463bc5
 int GetDepthCueingOn(void) {
-    LOG_TRACE("()");
     return gDepth_cueing_on;
 }
 
 // IDA: void __usercall SetDepthCueingOn(int pOn@<EAX>)
+// FUNCTION: CARM95 0x00463bda
 void SetDepthCueingOn(int pOn) {
-    LOG_TRACE("(%d)", pOn);
     if (pOn != gDepth_cueing_on && gHorizon_material) {
         InstantDepthChange(gSwap_depth_effect_type, gProgram_state.current_depth_effect.sky_texture, gSwap_depth_effect_start, gSwap_depth_effect_end);
         gSwap_depth_effect_type = gProgram_state.current_depth_effect.type;
@@ -1016,11 +1114,11 @@ void SetDepthCueingOn(int pOn) {
 }
 
 // IDA: void __cdecl ToggleDepthCueingQuietly()
+// FUNCTION: CARM95 0x00463c0d
 void ToggleDepthCueingQuietly(void) {
     tDepth_effect_type temp_type;
     int temp_start;
     int temp_end;
-    LOG_TRACE("()");
 
     temp_type = gProgram_state.current_depth_effect.type;
     temp_start = gProgram_state.current_depth_effect.start;
@@ -1036,20 +1134,21 @@ void ToggleDepthCueingQuietly(void) {
 }
 
 // IDA: void __cdecl ToggleDepthCueing()
+// FUNCTION: CARM95 0x00463c6b
 void ToggleDepthCueing(void) {
-    LOG_TRACE("()");
 
     SetDepthCueingOn(!GetDepthCueingOn());
     if (gProgram_state.current_depth_effect.type != eDepth_effect_none) {
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, GetMiscString(kMiscString_DepthCueingOn));
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, GetMiscString(kMiscString_DepthCueingOn));
     } else if (gSwap_depth_effect_type != eDepth_effect_none) {
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, GetMiscString(kMiscString_DepthCueingOff));
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, GetMiscString(kMiscString_DepthCueingOff));
     } else {
-        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -4, GetMiscString(kMiscString_ThereIsNoDepthCueingForThisRace));
+        NewTextHeadupSlot(eHeadupSlot_misc, 0, 2000, -kFont_MEDIUMHD, GetMiscString(kMiscString_ThereIsNoDepthCueingForThisRace));
     }
 }
 
 // IDA: void __cdecl ChangeDepthEffect()
+// FUNCTION: CARM95 0x00463d09
 void ChangeDepthEffect(void) {
     br_scalar x1;
     br_scalar x2;
@@ -1059,7 +1158,6 @@ void ChangeDepthEffect(void) {
     br_scalar z2;
     br_scalar distance;
     tSpecial_volume* special_volume;
-    LOG_TRACE("()");
 
     gProgram_state.current_depth_effect.type = gProgram_state.default_depth_effect.type;
     gProgram_state.current_depth_effect.sky_texture = gProgram_state.default_depth_effect.sky_texture;
@@ -1068,13 +1166,13 @@ void ChangeDepthEffect(void) {
 }
 
 // IDA: void __cdecl MungeForwardSky()
+// FUNCTION: CARM95 0x00463d3f
 void MungeForwardSky(void) {
-    LOG_TRACE("()");
 }
 
 // IDA: void __cdecl MungeRearviewSky()
+// FUNCTION: CARM95 0x00463d4a
 void MungeRearviewSky(void) {
-    LOG_TRACE("()");
 
     if (gSky_image_width != 0) {
         MungeSkyModel(gRearview_camera, gRearview_sky_model);

@@ -22,8 +22,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// GLOBAL: CARM95 0x00536278
 tSave_game* gSaved_games[8];
+
+// GLOBAL: CARM95 0x00536270
 int gStarted_typing;
+
+// GLOBAL: CARM95 0x00536274
 int gSave_allowed;
 
 #define SAVEGAME_VERSION 6
@@ -39,9 +44,9 @@ int gSave_allowed;
     } while (0)
 
 // IDA: void __usercall CorrectLoadByteOrdering(int pIndex@<EAX>)
+// FUNCTION: CARM95 0x0044bb57
 void CorrectLoadByteOrdering(int pIndex) {
     int i;
-    LOG_TRACE("(%d)", pIndex);
 
     SWAP32_BE(gSaved_games[pIndex]->version);
     SWAP32_BE(gSaved_games[pIndex]->rank);
@@ -85,12 +90,12 @@ static void CorrectChecksumByteOrdering(tSave_game* pSaved_game) {
 #endif
 
 // IDA: tU32 __usercall CalcLSChecksum@<EAX>(tSave_game *pSaved_game@<EAX>)
+// FUNCTION: CARM95 0x0044bd9d
 tU32 CalcLSChecksum(tSave_game* pSaved_game) {
     tU32 checksum;
     tU32 checksum2;
     int i;
     tU8* ptr;
-    LOG_TRACE("(%p)", pSaved_game);
 
 #ifdef DETHRACE_FIX_BUGS
     if (sizeof(tSave_game) - sizeof(tU32) != offsetof(tSave_game, checksum)) {
@@ -115,12 +120,12 @@ tU32 CalcLSChecksum(tSave_game* pSaved_game) {
 }
 
 // IDA: void __cdecl LoadSavedGames()
+// FUNCTION: CARM95 0x0044b9b0
 void LoadSavedGames(void) {
     tPath_name the_path;
     int i;
     FILE* f;
     tU32 the_size;
-    LOG_TRACE("()");
 
 #ifdef DETHRACE_FIX_BUGS
     if (sizeof(tSave_game) != 948) {
@@ -153,9 +158,9 @@ void LoadSavedGames(void) {
 }
 
 // IDA: void __cdecl DisposeSavedGames()
+// FUNCTION: CARM95 0x0044c111
 void DisposeSavedGames(void) {
     int i;
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gSaved_games); i++) {
         if (gSaved_games[i] != NULL) {
@@ -165,10 +170,10 @@ void DisposeSavedGames(void) {
 }
 
 // IDA: void __usercall LoadTheGame(int pSlot_index@<EAX>)
+// FUNCTION: CARM95 0x0044c161
 void LoadTheGame(int pSlot_index) {
     int i;
     char the_car_name[14];
-    LOG_TRACE("(%d)", pSlot_index);
 
     if (gProgram_state.car_name[0] != '\0') {
         DisposeCar(&gProgram_state.current_car, gProgram_state.current_car.index);
@@ -211,10 +216,10 @@ void LoadTheGame(int pSlot_index) {
 }
 
 // IDA: void __cdecl StartRollingSaveNamesIn()
+// FUNCTION: CARM95 0x0044be19
 void StartRollingSaveNamesIn(void) {
     int i;
     int save_slot_height;
-    LOG_TRACE("()");
 
     for (i = 0; i < COUNT_OF(gSaved_games); i++) {
         save_slot_height = gCurrent_graf_data->save_slot_y_offset + i * gCurrent_graf_data->rolling_letter_y_pitch;
@@ -230,14 +235,16 @@ void StartRollingSaveNamesIn(void) {
 }
 
 // IDA: void __cdecl LoadStart()
+// FUNCTION: CARM95 0x0044be09
 void LoadStart(void) {
-    LOG_TRACE("()");
 
     StartRollingSaveNamesIn();
 }
 
 // IDA: int __usercall DoLoadGame@<EAX>(int pSave_allowed@<EAX>)
+// FUNCTION: CARM95 0x0044bf62
 int DoLoadGame(void) {
+    // GLOBAL: CARM95 0x0050dd98
     static tFlicette flicker_on[9] = {
         { 74, { 47, 94 }, { 23, 55 } },
         { 74, { 47, 94 }, { 44, 110 } },
@@ -249,6 +256,7 @@ int DoLoadGame(void) {
         { 74, { 47, 94 }, { 170, 408 } },
         { 57, { 255, 510 }, { 151, 362 } },
     };
+    // GLOBAL: CARM95 0x0050de50
     static tFlicette flicker_off[9] = {
         { 73, { 47, 94 }, { 23, 55 } },
         { 73, { 47, 94 }, { 44, 110 } },
@@ -260,6 +268,7 @@ int DoLoadGame(void) {
         { 73, { 47, 94 }, { 170, 408 } },
         { 56, { 255, 510 }, { 151, 362 } },
     };
+    // GLOBAL: CARM95 0x0050df08
     static tFlicette push[9] = {
         { 74, { 47, 94 }, { 23, 55 } },
         { 74, { 47, 94 }, { 44, 110 } },
@@ -271,6 +280,7 @@ int DoLoadGame(void) {
         { 74, { 47, 94 }, { 170, 408 } },
         { 59, { 255, 510 }, { 151, 362 } },
     };
+    // GLOBAL: CARM95 0x0050dfc0
     static tMouse_area mouse_areas[9] = {
         { { 48, 96 }, { 17, 41 }, { 250, 500 }, { 33, 79 }, 0, 0, 0, NULL },
         { { 48, 96 }, { 39, 94 }, { 250, 500 }, { 55, 132 }, 1, 0, 0, NULL },
@@ -282,6 +292,7 @@ int DoLoadGame(void) {
         { { 48, 96 }, { 164, 394 }, { 250, 500 }, { 180, 432 }, 7, 0, 0, NULL },
         { { 152, 304 }, { 151, 362 }, { 299, 598 }, { 171, 410 }, 8, 1, 0, NULL },
     };
+    // GLOBAL: CARM95 0x0050e170
     static tRectile recopy_areas[24] = {
         {
             { 53, 106 },
@@ -428,6 +439,8 @@ int DoLoadGame(void) {
             { 182, 437 },
         },
     };
+
+    // GLOBAL: CARM95 0x0050e470
     static tInterface_spec interface_spec = {
         0,
         71,
@@ -481,7 +494,6 @@ int DoLoadGame(void) {
         recopy_areas,
     };
     int result;
-    LOG_TRACE("()");
 
     if (harness_game_info.mode == eGame_carmageddon_demo || harness_game_info.mode == eGame_splatpack_demo || harness_game_info.mode == eGame_splatpack_xmas_demo) {
         DoFeatureUnavailableInDemo();
@@ -539,9 +551,9 @@ int DoLoadGame(void) {
 }
 
 // IDA: void __usercall CorrectSaveByteOrdering(int pIndex@<EAX>)
+// FUNCTION: CARM95 0x0044c8e7
 void CorrectSaveByteOrdering(int pIndex) {
     int i;
-    LOG_TRACE("(%d)", pIndex);
 
     SWAP32_BE(gSaved_games[pIndex]->version);
     SWAP32_BE(gSaved_games[pIndex]->rank);
@@ -562,10 +574,10 @@ void CorrectSaveByteOrdering(int pIndex) {
 }
 
 // IDA: void __usercall SaveTheGame(int pSlot_number@<EAX>)
+// FUNCTION: CARM95 0x0044c7e0
 void SaveTheGame(int pSlot_number) {
     tPath_name the_path;
     FILE* f;
-    LOG_TRACE("(%d)", pSlot_number);
 
     gSaved_games[pSlot_number]->checksum = CalcLSChecksum(gSaved_games[pSlot_number]);
     PathCat(the_path, gApplication_path, "SAVEGAME");
@@ -582,23 +594,29 @@ void SaveTheGame(int pSlot_number) {
 }
 
 // IDA: int __cdecl ConfirmMidGameSave()
+// FUNCTION: CARM95 0x0044ceb9
 int ConfirmMidGameSave(void) {
+    // GLOBAL: CARM95 0x0050e5a0
     static tFlicette flicker_on[2] = {
         { 43, { 84, 168 }, { 124, 298 } },
         { 43, { 181, 362 }, { 124, 298 } },
     };
+    // GLOBAL: CARM95 0x0050e5c8
     static tFlicette flicker_off[2] = {
         { 42, { 84, 168 }, { 124, 298 } },
         { 42, { 181, 362 }, { 124, 298 } },
     };
+    // GLOBAL: CARM95 0x0050e5f0
     static tFlicette push[2] = {
         { 44, { 84, 168 }, { 124, 298 } },
         { 45, { 181, 362 }, { 124, 298 } },
     };
+    // GLOBAL: CARM95 0x0050e618
     static tMouse_area mouse_areas[2] = {
         { { 84, 168 }, { 124, 298 }, { 147, 294 }, { 144, 346 }, 0, 0, 0, NULL },
         { { 181, 362 }, { 124, 298 }, { 244, 488 }, { 144, 346 }, 1, 0, 0, NULL },
     };
+    // GLOBAL: CARM95 0x0050e678
     static tInterface_spec interface_spec = {
         0, 40, 0, 41, -1, -1, 0,
         { -1, 0 }, { -1, 0 }, { 0, 0 }, { 1, 0 }, { NULL, NULL },
@@ -612,15 +630,14 @@ int ConfirmMidGameSave(void) {
         COUNT_OF(mouse_areas), mouse_areas,
         0, NULL
     };
-    LOG_TRACE("()");
 
     return DoInterfaceScreen(&interface_spec, 0, 0) == 0;
 }
 
 // IDA: void __usercall MakeSavedGame(tSave_game **pSave_record@<EAX>)
+// FUNCTION: CARM95 0x0044c443
 void MakeSavedGame(tSave_game** pSave_record) {
     int i;
-    LOG_TRACE("(%p)", pSave_record);
 
     if (*pSave_record == NULL) {
         *pSave_record = BrMemCalloc(1, sizeof(tSave_game), kMem_new_save_game);
@@ -654,15 +671,15 @@ void MakeSavedGame(tSave_game** pSave_record) {
 }
 
 // IDA: void __cdecl SaveStart()
+// FUNCTION: CARM95 0x0044c66c
 void SaveStart(void) {
-    LOG_TRACE("()");
 
     StartRollingSaveNamesIn();
 }
 
 // IDA: void __usercall GetSaveName(int pStarting_to_type@<EAX>, int pCurrent_choice@<EDX>, char *pString@<EBX>, int *pMax_length@<ECX>)
+// FUNCTION: CARM95 0x0044c67c
 void GetSaveName(int pStarting_to_type, int pCurrent_choice, char* pString, int* pMax_length) {
-    LOG_TRACE("(%d, %d, \"%s\", %p)", pStarting_to_type, pCurrent_choice, pString, pMax_length);
 
     if (gSaved_games[pCurrent_choice] != NULL) {
         strcpy(pString, gSaved_games[pCurrent_choice]->slot_name);
@@ -678,8 +695,8 @@ void GetSaveName(int pStarting_to_type, int pCurrent_choice, char* pString, int*
 }
 
 // IDA: int __usercall SaveDone@<EAX>(int pCurrent_choice@<EAX>, int pCurrent_mode@<EDX>, int pGo_ahead@<EBX>, int pEscaped@<ECX>, int pTimed_out)
+// FUNCTION: CARM95 0x0044c73e
 int SaveDone(int pCurrent_choice, int pCurrent_mode, int pGo_ahead, int pEscaped, int pTimed_out) {
-    LOG_TRACE("(%d, %d, %d, %d, %d)", pCurrent_choice, pCurrent_mode, pGo_ahead, pEscaped, pTimed_out);
 
     if (!pEscaped && pCurrent_choice < 8) {
         gProgram_state.last_slot = pCurrent_choice;
@@ -695,10 +712,10 @@ int SaveDone(int pCurrent_choice, int pCurrent_mode, int pGo_ahead, int pEscaped
 }
 
 // IDA: int __usercall SaveGoAhead@<EAX>(int *pCurrent_choice@<EAX>, int *pCurrent_mode@<EDX>)
+// FUNCTION: CARM95 0x0044cb2d
 int SaveGoAhead(int* pCurrent_choice, int* pCurrent_mode) {
     char s1[256];
     char s2[256];
-    LOG_TRACE("(%p, %p)", pCurrent_choice, pCurrent_mode);
 
     if (gTyping_slot != 0) {
         sprintf(s1, VARLZEROINT, 2, gProgram_state.rank);
@@ -725,10 +742,10 @@ int SaveGoAhead(int* pCurrent_choice, int* pCurrent_mode) {
 }
 
 // IDA: int __usercall SaveEscape@<EAX>(int *pCurrent_choice@<EAX>, int *pCurrent_mode@<EDX>)
+// FUNCTION: CARM95 0x0044cc95
 int SaveEscape(int* pCurrent_choice, int* pCurrent_mode) {
     char s1[256];
     char s2[256];
-    LOG_TRACE("(%p, %p)", pCurrent_choice, pCurrent_mode);
 
     if (gStarted_typing != 0) {
         sprintf(s1, VARLZEROINT, 2, gProgram_state.rank);
@@ -755,7 +772,9 @@ int SaveEscape(int* pCurrent_choice, int* pCurrent_mode) {
 }
 
 // IDA: int __usercall SaveGameInterface@<EAX>(int pDefault_choice@<EAX>)
+// FUNCTION: CARM95 0x0044ceee
 int SaveGameInterface(int pDefault_choice) {
+    // GLOBAL: CARM95 0x0050e7a8
     static tFlicette flicker_on[9] = {
         { 74, { 47, 94 }, { 23, 55 } },
         { 74, { 47, 94 }, { 44, 106 } },
@@ -767,6 +786,7 @@ int SaveGameInterface(int pDefault_choice) {
         { 74, { 47, 94 }, { 170, 408 } },
         { 57, { 255, 510 }, { 151, 362 } },
     };
+    // GLOBAL: CARM95 0x0050e860
     static tFlicette flicker_off[9] = {
         { 73, { 47, 94 }, { 23, 55 } },
         { 73, { 47, 94 }, { 44, 106 } },
@@ -778,6 +798,7 @@ int SaveGameInterface(int pDefault_choice) {
         { 73, { 47, 94 }, { 170, 408 } },
         { 56, { 255, 510 }, { 151, 362 } },
     };
+    // GLOBAL: CARM95 0x0050e918
     static tFlicette push[9] = {
         { 74, { 47, 94 }, { 23, 55 } },
         { 74, { 47, 94 }, { 44, 106 } },
@@ -789,6 +810,7 @@ int SaveGameInterface(int pDefault_choice) {
         { 74, { 47, 94 }, { 170, 408 } },
         { 59, { 255, 510 }, { 151, 362 } },
     };
+    // GLOBAL: CARM95 0x0050e9d0
     static tMouse_area mouse_areas[9] = {
         { { 48, 96 }, { 17, 41 }, { 250, 500 }, { 33, 79 }, 0, 0, 0, NULL },
         { { 48, 96 }, { 39, 94 }, { 250, 500 }, { 55, 132 }, 1, 0, 0, NULL },
@@ -800,6 +822,7 @@ int SaveGameInterface(int pDefault_choice) {
         { { 48, 96 }, { 164, 394 }, { 250, 500 }, { 180, 432 }, 7, 0, 0, NULL },
         { { 152, 304 }, { 151, 362 }, { 299, 598 }, { 171, 410 }, 8, 1, 0, NULL },
     };
+    // GLOBAL: CARM95 0x0050eb80
     static tRectile recopy_areas[24] = {
         {
             { 53, 106 },
@@ -946,6 +969,7 @@ int SaveGameInterface(int pDefault_choice) {
             { 182, 437 },
         },
     };
+    // GLOBAL: CARM95 0x0050EE80
     static tInterface_spec interface_spec = {
         0, 50, 0, 0, 0, 0, 2,
         { 1, 0 }, { -1, 8 }, { 8, 0 }, { 8, 7 }, { NULL, NULL },
@@ -960,15 +984,14 @@ int SaveGameInterface(int pDefault_choice) {
         COUNT_OF(mouse_areas), mouse_areas,
         COUNT_OF(recopy_areas), recopy_areas
     };
-    LOG_TRACE("(%d)", pDefault_choice);
 
     gStarted_typing = 0;
     return DoInterfaceScreen(&interface_spec, 0, pDefault_choice) < 8;
 }
 
 // IDA: void __usercall DoSaveGame(int pSave_allowed@<EAX>)
+// FUNCTION: CARM95 0x0044cdfd
 void DoSaveGame(int pSave_allowed) {
-    LOG_TRACE("()");
 
     if (harness_game_info.mode == eGame_carmageddon_demo || harness_game_info.mode == eGame_splatpack_demo || harness_game_info.mode == eGame_splatpack_xmas_demo) {
         DoFeatureUnavailableInDemo();

@@ -1,6 +1,8 @@
 #ifndef HARNESS_CONFIG_H
 #define HARNESS_CONFIG_H
 
+#define MAX_PATH 1024
+
 typedef enum tHarness_game_type {
     eGame_none,
     eGame_carmageddon,
@@ -14,6 +16,7 @@ typedef enum {
     eGameLocalization_none,
     eGameLocalization_german,
     eGameLocalization_polish,
+    eGameLocalization_french,
 } tHarness_game_localization;
 
 typedef struct tHarness_game_info {
@@ -34,6 +37,11 @@ typedef struct tHarness_game_info {
     int data_dir_has_3dfx_assets;
 } tHarness_game_info;
 
+typedef struct tHarness_game_dir {
+    char name[256];
+    char directory[MAX_PATH];
+} tHarness_game_dir;
+
 typedef struct tHarness_game_config {
     int enable_cd_check;
     int physics_step_time;
@@ -46,7 +54,6 @@ typedef struct tHarness_game_config {
     int gore_check;
     int sound_options;
 
-    int no_music;
     int verbose;
     int opengl_3dfx_mode;
     int game_completed;
@@ -54,6 +61,12 @@ typedef struct tHarness_game_config {
     int install_signalhandler;
     int no_bind;
     char network_adapter_name[256];
+    char platform_name[256];
+
+    char selected_dir[MAX_PATH];
+    int game_dirs_count;
+    tHarness_game_dir game_dirs[10];
+    char default_game[256];
 } tHarness_game_config;
 
 extern tHarness_game_info harness_game_info;

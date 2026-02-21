@@ -13,7 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-char* gError_messages[126] = {
+// GLOBAL: CARM95 0x005120a0
+char* gError_messages[] = {
     "Unable to support this screen depth setting",
     "Couldn't allocate off-screen buffer",
     "Couldn't allocate Z-Buffer",
@@ -151,6 +152,7 @@ int gMouse_was_started__errors; // suffix added to avoid duplicate symbol
 char* gPixels_copy__errors;     // suffix added to avoid duplicate symbol
 
 // IDA: void __cdecl FatalError(int pStr_index, ...)
+// FUNCTION: CARM95 0x00461390
 void FatalError(int pStr_index, ...) {
     char the_str[1024];
     char* sub_str;
@@ -158,7 +160,6 @@ void FatalError(int pStr_index, ...) {
     char* sub_pt;
     va_list ap;
     int i;
-    LOG_TRACE("(%d)", pStr_index);
 
     va_start(ap, pStr_index);
 
@@ -185,6 +186,7 @@ void FatalError(int pStr_index, ...) {
 }
 
 // IDA: void __cdecl NonFatalError(int pStr_index, ...)
+// FUNCTION: CARM95 0x004614f1
 void NonFatalError(int pStr_index, ...) {
     char the_str[256];
     char* sub_str;
@@ -192,7 +194,6 @@ void NonFatalError(int pStr_index, ...) {
     char* sub_pt;
     va_list ap;
     int i;
-    LOG_TRACE("(%d)", pStr_index);
 
     va_start(ap, pStr_index);
 
@@ -217,8 +218,8 @@ void NonFatalError(int pStr_index, ...) {
 
 // IDA: void __cdecl CloseDiagnostics()
 // This function is stripped from the retail binary, we've guessed at the implementation
+// FUNCTION: CARM95 0x0046162f
 void CloseDiagnostics(void) {
-    LOG_TRACE("()");
 
     if (harness_game_config.enable_diagnostics == 0) {
         return;
@@ -229,8 +230,8 @@ void CloseDiagnostics(void) {
 
 // IDA: void __cdecl OpenDiagnostics()
 // This function is stripped from the retail binary, we've guessed at the implementation
+// FUNCTION: CARM95 0x0046163a
 void OpenDiagnostics(void) {
-    LOG_TRACE("()");
 
     if (harness_game_config.enable_diagnostics == 0) {
         return;
@@ -245,6 +246,7 @@ void OpenDiagnostics(void) {
 
 // Renamed from dprintf to avoid collisions to stdio
 // This function is stripped from the retail binary, we've guessed at the implementation
+// FUNCTION: CARM95 0x00461645
 void dr_dprintf(char* fmt_string, ...) {
     static tU32 first_time = 0;
     va_list args;
@@ -279,8 +281,8 @@ void dr_dprintf(char* fmt_string, ...) {
 }
 
 // IDA: int __usercall DoErrorInterface@<EAX>(int pMisc_text_index@<EAX>)
+// FUNCTION: CARM95 0x00461650
 int DoErrorInterface(int pMisc_text_index) {
-    LOG_TRACE("(%d)", pMisc_text_index);
 
     NetFullScreenMessage(pMisc_text_index, 0);
     return 0;

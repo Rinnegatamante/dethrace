@@ -135,7 +135,7 @@ tAudioBackend_error_code AudioBackend_Init(void) {
     sceKernelStartThread(audiothread, 0, NULL);
 #endif
 #else
-    LOG_INFO("Playback device: '%s'", engine.pDevice->playback.name);
+    LOG_INFO2("Playback device: '%s'", engine.pDevice->playback.name);
 #endif
     ma_engine_set_volume(&engine, harness_game_config.volume_multiplier);
 

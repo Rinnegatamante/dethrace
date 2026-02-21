@@ -3,6 +3,7 @@
 #include "include/harness/config.h"
 #include "include/harness/hooks.h"
 #include "include/harness/os.h"
+#include "ini.h"
 #include "platforms/null.h"
 #include "version.h"
 
@@ -16,21 +17,41 @@
 #include <vitasdk.h>
 #endif
 
-extern uint32_t gI_am_cheating;
+extern br_uint_32 gI_am_cheating;
+extern int gSound_override;
+extern int gSausage_override;
+extern int gGraf_spec_index;
 
 extern void Harness_Platform_Init(tHarness_platform* platform);
 
 extern const tPlatform_bootstrap SDL1_bootstrap;
 extern const tPlatform_bootstrap SDL2_bootstrap;
+extern const tPlatform_bootstrap SDL3_bootstrap;
 
-static const tPlatform_bootstrap *platform_bootstraps[] = {
-#ifdef DETHRACE_PLATFORM_SDL2
-    &SDL2_bootstrap,
+static const tPlatform_bootstrap* platform_bootstraps[] = {
+#if defined(DETHRACE_PLATFORM_SDL3)
+    &SDL3_bootstrap,
+#define HAS_PLATFORM_BOOTSTRAP
 #endif
-#ifdef DETHRACE_PLATFORM_SDL1
+#if defined(DETHRACE_PLATFORM_SDL2)
+    &SDL2_bootstrap,
+#define HAS_PLATFORM_BOOTSTRAP
+#endif
+#if defined(DETHRACE_PLATFORM_SDL1)
     &SDL1_bootstrap,
+#define HAS_PLATFORM_BOOTSTRAP
+#endif
+#ifndef HAS_PLATFORM_BOOTSTRAP
+    // This is the case for MSVC 4.20 builds
+    NULL
 #endif
 };
+
+#define safe_strcpy(DEST, SRC) \
+    do { \
+        strncpy((DEST), (SRC), sizeof(DEST)); \
+        (DEST)[sizeof(DEST) - 1] = '\0'; \
+    } while (0)
 
 // SplatPack or Carmageddon. This is where we represent the code differences between the two. For example, the intro smack file.
 tHarness_game_info harness_game_info;
@@ -43,20 +64,82 @@ tHarness_platform gHarness_platform;
 
 static int force_null_platform = 0;
 
-typedef struct {
-    const char *platform_name;
-    uint32_t platform_capabilityies;
-    int install_signalhandler;
-} tArgument_config;
+static int Harness_ProcessCommandLine(int* argc, char* argv[]);
+static int Harness_ProcessIniFile(void);
 
-static int Harness_ProcessCommandLine(tArgument_config* argument_config, int* argc, char* argv[]);
+static int Harness_InitPlatform(void) {
+    int required_caps = 0;
+
+    if (force_null_platform) {
+        Null_Platform_Init(&gHarness_platform);
+    } else {
+        const tPlatform_bootstrap* selected_bootstrap = NULL;
+
+        if (harness_game_config.opengl_3dfx_mode) {
+            required_caps &= ~ePlatform_cap_video_mask;
+            required_caps |= ePlatform_cap_opengl;
+        }
+
+        if (strlen(harness_game_config.platform_name) != 0) {
+            size_t i;
+            for (i = 0; i < BR_ASIZE(platform_bootstraps); i++) {
+                if (strcasecmp(platform_bootstraps[i]->name, harness_game_config.platform_name) == 0) {
+                    if ((platform_bootstraps[i]->capabilities & required_caps) != required_caps) {
+                        fprintf(stderr, "Platform \"%s\" does not support required capabilities. Try another video driver and/or add/remove --opengl\n", selected_bootstrap->name);
+                        return 1;
+                    }
+                    selected_bootstrap = platform_bootstraps[i];
+                    break;
+                }
+            }
+            if (selected_bootstrap == NULL) {
+                fprintf(stderr, "Could not find a platform named \"%s\"\n", harness_game_config.platform_name);
+                return 1;
+            }
+            if (selected_bootstrap->init(&gHarness_platform) != 0) {
+                fprintf(stderr, "%s initialization failed\n", selected_bootstrap->name);
+                return 1;
+            }
+        } else {
+            size_t i;
+            for (i = 0; i < BR_ASIZE(platform_bootstraps); i++) {
+                LOG_DEBUG2("Attempting video driver \"%s\"", platform_bootstraps[i]->name);
+                if ((platform_bootstraps[i]->capabilities & required_caps) != required_caps) {
+                    fprintf(stderr, "Skipping platform \"%s\". Does not support required capabilities.\n", platform_bootstraps[i]->name);
+                    continue;
+                }
+                LOG_DEBUG2("Try platform \"%s\"...", platform_bootstraps[i]->name);
+                if (platform_bootstraps[i]->init(&gHarness_platform) == 0) {
+                    selected_bootstrap = platform_bootstraps[i];
+                    break;
+                }
+            }
+            if (selected_bootstrap == NULL) {
+                fprintf(stderr, "Could not find a supported platform\n");
+                return 1;
+            }
+        }
+        if (selected_bootstrap == NULL) {
+            fprintf(stderr, "Could not find a supported platform\n");
+            return 1;
+        }
+        LOG_INFO3("Platform: %s (%s)", selected_bootstrap->name, selected_bootstrap->description);
+    }
+
+    return 0;
+}
 
 static void Harness_DetectGameMode(void) {
+    FILE* f;
+    int filesize;
+    char* buffer;
+    int nb;
+
     if (access("DATA/RACES/CASTLE.TXT", F_OK) != -1) {
         // All splatpack edition have the castle track
         if (access("DATA/RACES/CASTLE2.TXT", F_OK) != -1) {
             // Only the full splat release has the castle2 track
-            harness_game_info.defines.INTRO_SMK_FILE = "SPLINTRO.SMK";
+            harness_game_info.defines.INTRO_SMK_FILE = "MIX_INTR.SMK";
             harness_game_info.defines.GERMAN_LOADSCRN = "LOADSCRN.PIX";
             harness_game_info.mode = eGame_splatpack;
             printf("Game mode: Splat Pack\n");
@@ -98,12 +181,12 @@ static void Harness_DetectGameMode(void) {
 
     harness_game_info.localization = eGameLocalization_none;
     if (access("DATA/TRNSLATE.TXT", F_OK) != -1) {
-        FILE* f = fopen("DATA/TRNSLATE.TXT", "rb");
+        f = fopen("DATA/TRNSLATE.TXT", "rb");
         fseek(f, 0, SEEK_END);
-        int filesize = ftell(f);
+        filesize = ftell(f);
         fseek(f, 0, SEEK_SET);
-        char* buffer = malloc(filesize + 1);
-        int nb = fread(buffer, 1, filesize, f);
+        buffer = malloc(filesize + 1);
+        nb = fread(buffer, 1, filesize, f);
         if (nb != filesize) {
             LOG_PANIC("Unable to read DATA/TRNSLATE.TXT");
         }
@@ -111,10 +194,13 @@ static void Harness_DetectGameMode(void) {
         fclose(f);
         if (strstr(buffer, "NEUES SPIEL") != NULL) {
             harness_game_info.localization = eGameLocalization_german;
-            LOG_INFO("Language: \"%s\"", "German");
+            LOG_INFO2("Language: \"%s\"", "German");
         } else if (strstr(buffer, "NOWA GRA") != NULL) {
             harness_game_info.localization = eGameLocalization_polish;
-            LOG_INFO("Language: \"%s\"", "Polish");
+            LOG_INFO2("Language: \"%s\"", "Polish");
+        } else if (strstr(buffer, "NOUVELLE PARTIE") != NULL) {
+            harness_game_info.localization = eGameLocalization_french;
+            LOG_INFO2("Language: \"%s\"", "French");
         } else {
             LOG_INFO("Language: unrecognized");
         }
@@ -154,8 +240,38 @@ static void Harness_DetectGameMode(void) {
     }
 }
 
+void Harness_DetectAndSetWorkingDirectory(char* argv0) {
+    char* path;
+    char* env_var;
+    char pref_path[MAX_PATH];
+
+    env_var = getenv("DETHRACE_ROOT_DIR");
+
+    if (strlen(harness_game_config.selected_dir) > 0) {
+        path = harness_game_config.selected_dir;
+    } else if (env_var != NULL) {
+        LOG_INFO2("DETHRACE_ROOT_DIR is set to '%s'", env_var);
+        path = env_var;
+    } else {
+        path = OS_GetWorkingDirectory(argv0);
+        if (access("DATA/GENERAL.TXT", F_OK) == 0) {
+            // good, found
+        } else {
+            OS_GetPrefPath(pref_path, "dethrace");
+            path = pref_path;
+        }
+    }
+
+    // if root_dir is null or empty, no need to chdir
+    if (path != NULL && path[0] != '\0') {
+        printf("Using game directory: %s\n", path);
+        if (chdir(path) != 0) {
+            LOG_PANIC2("Failed to chdir. Error is %s", strerror(errno));
+        }
+    }
+}
+
 int Harness_Init(int* argc, char* argv[]) {
-    int result;
 
     printf("Dethrace version: %s\n", DETHRACE_VERSION);
 
@@ -186,16 +302,20 @@ int Harness_Init(int* argc, char* argv[]) {
     // Disable verbose logging
     harness_game_config.verbose = 0;
 
-    tArgument_config argument_config;
-    // don't require a particular platform
-    argument_config.platform_name = NULL;
-    // request software renderer capability
-    argument_config.platform_capabilityies = ePlatform_cap_software;
     // install signal handler
-    argument_config.install_signalhandler = 1;
+    harness_game_config.install_signalhandler = 1;
 
-    if (Harness_ProcessCommandLine(&argument_config, argc, argv) != 0) {
+    // first load ini file if exists
+    Harness_ProcessIniFile();
+
+    // then override any config options with command line args
+    if (Harness_ProcessCommandLine(argc, argv) != 0) {
         fprintf(stderr, "Failed to parse harness command line\n");
+        return 1;
+    }
+	
+	// now resolve the platform
+    if (Harness_InitPlatform() != 0) {
         return 1;
     }
 
@@ -209,20 +329,8 @@ int Harness_Init(int* argc, char* argv[]) {
     scePowerSetGpuClockFrequency(222);
     scePowerSetGpuXbarClockFrequency(166);
 #endif
-    char* root_dir = getenv("DETHRACE_ROOT_DIR");
-    if (root_dir != NULL) {
-        LOG_INFO("DETHRACE_ROOT_DIR is set to '%s'", root_dir);
-    } else {
-        root_dir = OS_GetWorkingDirectory(argv[0]);
-    }
-    // if root_dir is null or empty, no need to chdir
-    if (root_dir != NULL && root_dir[0] != '\0') {
-        printf("Using root directory: %s\n", root_dir);
-        result = chdir(root_dir);
-        if (result != 0) {
-            LOG_PANIC("Failed to chdir. Error is %s", strerror(errno));
-        }
-    }
+
+    Harness_DetectAndSetWorkingDirectory(argv[0]);
 
     if (harness_game_info.mode == eGame_none) {
         Harness_DetectGameMode();
@@ -233,57 +341,14 @@ int Harness_Init(int* argc, char* argv[]) {
         exit(1);
     }
 
-    if (force_null_platform) {
-        Null_Platform_Init(&gHarness_platform);
-    } else {
-        const tPlatform_bootstrap* selected_bootstrap = NULL;
-
-        if (argument_config.platform_name != NULL) {
-            size_t i;
-            for (i = 0; i < BR_ASIZE(platform_bootstraps); i++) {
-                if (strcasecmp(platform_bootstraps[i]->name, argument_config.platform_name) == 0) {
-                    if ((platform_bootstraps[i]->capabilities & argument_config.platform_capabilityies) != argument_config.platform_capabilityies) {
-                        fprintf(stderr, "Platform \"%s\" does not support requested capabilities. Try another video driver and/or add/remove --opengl\n", selected_bootstrap->name);
-                        return 1;
-                    }
-                    selected_bootstrap = platform_bootstraps[i];
-                    break;
-                }
-            }
-            if (selected_bootstrap == NULL) {
-                fprintf(stderr, "Could not find a platform named \"%s\"\n", argument_config.platform_name);
-                return 1;
-            }
-            if (selected_bootstrap->init(&gHarness_platform) != 0) {
-                fprintf(stderr, "%s initialization failed\n", selected_bootstrap->name);
-                return 1;
-            }
-        } else {
-            size_t i;
-            for (i = 0; i < BR_ASIZE(platform_bootstraps); i++) {
-                LOG_TRACE10("Attempting video driver \"%s\"", platform_bootstraps[i]->name);
-                if ((platform_bootstraps[i]->capabilities & argument_config.platform_capabilityies) != argument_config.platform_capabilityies) {
-                    fprintf(stderr, "Skipping platform \"%s\". Does not support required capabilities.\n", platform_bootstraps[i]->name);
-                    continue;
-                }
-                LOG_TRACE10("Try platform \"%s\"...");
-                if (platform_bootstraps[i]->init(&gHarness_platform) == 0) {
-                    selected_bootstrap = platform_bootstraps[i];
-                    break;
-                }
-            }
-            if (selected_bootstrap == NULL) {
-                fprintf(stderr, "Could not find a supported platform\n");
-                return 1;
-            }
-        }
-        if (selected_bootstrap == NULL) {
-            fprintf(stderr, "Could not find a supported platform\n");
-            return 1;
-        }
-        LOG_INFO("Platform: %s (%s)", selected_bootstrap->name, selected_bootstrap->description);
-    }
     return 0;
+}
+
+void Harness_Quit(void) {
+
+    if (harness_game_config.install_signalhandler) {
+        OS_RemoveSignalHandler();
+    }
 }
 
 // used by unit tests
@@ -291,27 +356,48 @@ void Harness_ForceNullPlatform(void) {
     force_null_platform = 1;
 }
 
-int Harness_ProcessCommandLine(tArgument_config* config, int* argc, char* argv[]) {
-    for (int i = 1; i < *argc;) {
+int Harness_ProcessCommandLine(int* argc, char* argv[]) {
+    int i, j;
+    char* val;
+    for (i = 1; i < *argc;) {
         int consumed = -1;
 
-        if (strcasecmp(argv[i], "--cdcheck") == 0) {
+        if (strcasecmp(argv[i], "--game") == 0) {
+            if (i < *argc + 1) {
+                val = argv[i + 1];
+                for (i = 0; i < harness_game_config.game_dirs_count; i++) {
+                    if (strcmp(harness_game_config.game_dirs[i].name, val) == 0) {
+                        safe_strcpy(harness_game_config.selected_dir, harness_game_config.game_dirs[i].directory);
+                        break;
+                    }
+                }
+                if (i == harness_game_config.game_dirs_count) {
+                    LOG_PANIC2("Failed to find game %s", val);
+                }
+                consumed = 2;
+            }
+        } else if (strcasecmp(argv[i], "--dir") == 0) {
+            if (i < *argc + 1) {
+                safe_strcpy(harness_game_config.selected_dir, argv[i + 1]);
+                consumed = 2;
+            }
+        } else if (strcasecmp(argv[i], "--cdcheck") == 0) {
             harness_game_config.enable_cd_check = 1;
             consumed = 1;
         } else if (strstr(argv[i], "--debug=") != NULL) {
             char* s = strstr(argv[i], "=");
             harness_debug_level = atoi(s + 1);
-            LOG_INFO("debug level set to %d", harness_debug_level);
+            LOG_INFO2("debug level set to %d", harness_debug_level);
             consumed = 1;
         } else if (strstr(argv[i], "--physics-step-time=") != NULL) {
             char* s = strstr(argv[i], "=");
             harness_game_config.physics_step_time = atoi(s + 1);
-            LOG_INFO("Physics step time set to %d", harness_game_config.physics_step_time);
+            LOG_INFO2("Physics step time set to %d", harness_game_config.physics_step_time);
             consumed = 1;
         } else if (strstr(argv[i], "--fps=") != NULL) {
             char* s = strstr(argv[i], "=");
             harness_game_config.fps = atoi(s + 1);
-            LOG_INFO("FPS limiter set to %f", harness_game_config.fps);
+            LOG_INFO2("FPS limiter set to %f", harness_game_config.fps);
             consumed = 1;
         } else if (strcasecmp(argv[i], "--freeze-timer") == 0) {
             LOG_INFO("Timer frozen");
@@ -319,12 +405,12 @@ int Harness_ProcessCommandLine(tArgument_config* config, int* argc, char* argv[]
             consumed = 1;
         } else if (strcasecmp(argv[i], "--no-signal-handler") == 0) {
             LOG_INFO("Don't install the signal handler");
-            config->install_signalhandler = 0;
+            harness_game_config.install_signalhandler = 0;
             consumed = 1;
         } else if (strstr(argv[i], "--demo-timeout=") != NULL) {
             char* s = strstr(argv[i], "=");
             harness_game_config.demo_timeout = atoi(s + 1) * 1000;
-            LOG_INFO("Demo timeout set to %d milliseconds", harness_game_config.demo_timeout);
+            LOG_INFO2("Demo timeout set to %d milliseconds", harness_game_config.demo_timeout);
             consumed = 1;
         } else if (strcasecmp(argv[i], "--i-am-cheating") == 0) {
             gI_am_cheating = 0xa11ee75d;
@@ -335,7 +421,7 @@ int Harness_ProcessCommandLine(tArgument_config* config, int* argc, char* argv[]
         } else if (strstr(argv[i], "--volume-multiplier=") != NULL) {
             char* s = strstr(argv[i], "=");
             harness_game_config.volume_multiplier = atof(s + 1);
-            LOG_INFO("Volume multiplier set to %f", harness_game_config.volume_multiplier);
+            LOG_INFO2("Volume multiplier set to %f", harness_game_config.volume_multiplier);
             consumed = 1;
         } else if (strcasecmp(argv[i], "--full-screen") == 0) {
             // option left for backwards compatibility
@@ -351,12 +437,7 @@ int Harness_ProcessCommandLine(tArgument_config* config, int* argc, char* argv[]
             harness_game_config.sound_options = 1;
             consumed = 1;
         } else if (strcasecmp(argv[i], "--opengl") == 0) {
-            config->platform_capabilityies &= ~ePlatform_cap_video_mask;
-            config->platform_capabilityies |= ePlatform_cap_opengl;
             harness_game_config.opengl_3dfx_mode = 1;
-            consumed = 1;
-        } else if (strcasecmp(argv[i], "--no-music") == 0) {
-            harness_game_config.no_music = 1;
             consumed = 1;
         } else if (strcasecmp(argv[i], "--game-completed") == 0) {
             harness_game_config.game_completed = 1;
@@ -364,25 +445,133 @@ int Harness_ProcessCommandLine(tArgument_config* config, int* argc, char* argv[]
         } else if (strcasecmp(argv[i], "--no-bind") == 0) {
             harness_game_config.no_bind = 1;
             consumed = 1;
-        } else if (strstr(argv[i], "--network-adapter-name=") != NULL) {
-            char* s = strstr(argv[i], "=");
-            strcpy(harness_game_config.network_adapter_name, s + 1);
-            consumed = 1;
-        } else if (strcmp(argv[i], "--platform") == 0) {
+        } else if (strstr(argv[i], "--network-adapter-name") != NULL) {
             if (i < *argc + 1) {
-                config->platform_name = argv[i + 1];
+                safe_strcpy(harness_game_config.network_adapter_name, argv[i + 1]);
+                consumed = 2;
+            }
+        } else if (strcasecmp(argv[i], "--platform") == 0) {
+            if (i < *argc + 1) {
+                safe_strcpy(harness_game_config.platform_name, argv[i + 1]);
                 consumed = 2;
             }
         }
 
         if (consumed > 0) {
             // shift args downwards
-            for (int j = i; j < *argc - consumed; j++) {
+            for (j = i; j < *argc - consumed; j++) {
                 argv[j] = argv[j + consumed];
             }
             *argc -= consumed;
         } else {
             i += 1;
+        }
+    }
+
+    return 0;
+}
+
+static int Harness_Ini_Callback(void* user, const char* section, const char* name, const char* value) {
+    int i;
+    float f;
+
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+#define MATCH_NAME(s, n) strcmp(name, s) == 0
+
+    if (strcmp(section, "Games") == 0) {
+        safe_strcpy(harness_game_config.game_dirs[harness_game_config.game_dirs_count].name, name);
+        safe_strcpy(harness_game_config.game_dirs[harness_game_config.game_dirs_count].directory, value);
+        harness_game_config.game_dirs_count++;
+    }
+
+    else if (MATCH("General", "CdCheck")) {
+        harness_game_config.enable_cd_check = (value[0] == '1');
+    } else if (MATCH("General", "GoreCheck")) {
+        harness_game_config.gore_check = (value[0] == '1');
+    } else if (MATCH("General", "FPSLimit")) {
+        i = atoi(value);
+        harness_game_config.fps = i;
+    } else if (MATCH("General", "DemoTimeout")) {
+        i = atoi(value);
+        harness_game_config.demo_timeout = i * 1000;
+    } else if (MATCH("General", "Windowed")) {
+        harness_game_config.start_full_screen = (value[0] == '0');
+    } else if (MATCH("General", "Emulate3DFX")) {
+        harness_game_config.opengl_3dfx_mode = (value[0] == '1');
+    } else if (MATCH("General", "DefaultGame")) {
+        safe_strcpy(harness_game_config.default_game, value);
+    } else if (MATCH("General", "BoringMode")) {
+        gSausage_override = (value[0] == '1');
+    } else if (MATCH("General", "Hires")) {
+        gGraf_spec_index = (value[0] == '1');
+    }
+
+    else if (MATCH("Cheats", "EditMode")) {
+        if (value[0] == '1') {
+            gI_am_cheating = 0xa11ee75d;
+        }
+    } else if (MATCH("Cheats", "FreezeTimer")) {
+        harness_game_config.freeze_timer = (value[0] == '1');
+    } else if (MATCH("Cheats", "GameCompleted")) {
+        harness_game_config.game_completed = (value[0] == '1');
+    }
+
+    else if (MATCH("Sound", "Enabled")) {
+        // gSound_override=1 means sound is disabled
+        gSound_override = (value[0] == '0');
+    } else if (MATCH("Sound", "SoundOptionsScreen")) {
+        harness_game_config.sound_options = (value[0] == '1');
+    } else if (MATCH("Sound", "VolumeMultiplier")) {
+        f = atof(value);
+        harness_game_config.volume_multiplier = f;
+    }
+
+    else if (MATCH("Network", "AdapterName")) {
+        safe_strcpy(harness_game_config.network_adapter_name, value);
+    }
+
+    else if (MATCH("Developers", "Diagnostics")) {
+        harness_game_config.enable_diagnostics = (value[0] == '1');
+    } else if (MATCH("Developers", "PhysicsStepTime")) {
+        i = atoi(value);
+        harness_game_config.physics_step_time = i;
+    } else if (MATCH("Developers", "InstallSignalHandler")) {
+        harness_game_config.install_signalhandler = (value[0] == '1');
+    }
+
+    else {
+        // unknown section/name
+    }
+
+    return 1;
+}
+
+int Harness_ProcessIniFile(void) {
+    int i;
+    char path[1024];
+
+    OS_GetPrefPath(path, "dethrace");
+    strcat(path, "dethrace.ini");
+    LOG_INFO2("Loading ini file %s", path);
+
+    if (ini_parse(path, Harness_Ini_Callback, NULL) < 0) {
+        LOG_DEBUG2("Failed to load config file %s", path);
+        return 1;
+    }
+
+    // set default game dir
+    if (harness_game_config.game_dirs_count > 0) {
+        if (strlen(harness_game_config.default_game) > 0) {
+            for (i = 0; i < harness_game_config.game_dirs_count; i++) {
+                if (strcmp(harness_game_config.game_dirs[i].name, harness_game_config.default_game) == 0) {
+                    safe_strcpy(harness_game_config.selected_dir, harness_game_config.game_dirs[i].directory);
+                    break;
+                }
+            }
+            // if no default found, and we have some game dirs, default to first one
+            if (i == harness_game_config.game_dirs_count) {
+                safe_strcpy(harness_game_config.selected_dir, harness_game_config.game_dirs[i].directory);
+            }
         }
     }
 
@@ -396,10 +585,20 @@ FILE* Harness_Hook_fopen(const char* pathname, const char* mode) {
 
 // Localization
 int Harness_Hook_isalnum(int c) {
+    int i;
     if (harness_game_info.localization == eGameLocalization_polish) {
         // Polish diacritic letters in Windows-1250
         unsigned char letters[] = { 140, 143, 156, 159, 163, 165, 175, 179, 185, 191, 198, 202, 209, 211, 230, 234, 241, 243 };
-        for (int i = 0; i < (int)sizeof(letters); i++) {
+        for (i = 0; i < (int)sizeof(letters); i++) {
+            if ((unsigned char)c == letters[i]) {
+                return 1;
+            }
+        }
+    }
+    if (harness_game_info.localization == eGameLocalization_french) {
+        // French diacritic letters in Windows-1252
+        unsigned char letters[] = { 140, 156, 159, 192, 194, 198, 199, 200, 201, 202, 203, 206, 207, 212, 217, 219, 220, 224, 226, 230, 231, 232, 233, 234, 235, 238, 239, 244, 249, 251, 252, 255 };
+        for (i = 0; i < (int)sizeof(letters); i++) {
             if ((unsigned char)c == letters[i]) {
                 return 1;
             }
