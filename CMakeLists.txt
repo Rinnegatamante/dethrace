@@ -16,6 +16,14 @@ endif()
 
 project(dethrace C)
 
+if (VITA)
+	include("${VITASDK}/share/vita.cmake" REQUIRED)
+	set(VITA_APP_NAME "dethrace")
+	set(VITA_TITLEID  "DETHRACE1")
+	set(VITA_VERSION  "01.00")
+	set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
+endif()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 
 if(MSVC)

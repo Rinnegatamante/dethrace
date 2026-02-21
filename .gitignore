@@ -6,3 +6,7 @@
 *.bin
 *.velf
 *.sfo
+
+dethrace/*
+*.obj
+*.zip

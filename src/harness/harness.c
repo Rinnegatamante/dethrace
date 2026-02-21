@@ -194,7 +194,11 @@ int Harness_Init(int* argc, char* argv[]) {
     // install signal handler
     argument_config.install_signalhandler = 1;
 
-    Harness_ProcessCommandLine(argc, argv);
+    if (Harness_ProcessCommandLine(&argument_config, argc, argv) != 0) {
+        fprintf(stderr, "Failed to parse harness command line\n");
+        return 1;
+    }
+
 #ifndef __vita__
     if (harness_game_config.install_signalhandler) {
         OS_InstallSignalHandler(argv[0]);

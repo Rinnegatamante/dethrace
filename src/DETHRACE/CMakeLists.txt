@@ -202,11 +202,11 @@ target_sources(dethrace PRIVATE main.c)
 
 if (VITA)
     target_link_options(dethrace PRIVATE  -Wl,-q -g)
-    target_link_libraries(dethrace PRIVATE 
-        -Wl,--whole-archive taihen_stub SceNet_stub SceHid_stub SceNetCtl_stub SceSysmodule_stub
+    target_link_libraries(dethrace PRIVATE -Wl,--whole-archive vitaGL vitashark mathneon stdc++
+        SceShaccCgExt SceShaccCg_stub taihen_stub SceNet_stub SceHid_stub SceNetCtl_stub
         SceKernelDmacMgr_stub SceAppMgr_stub SceGxm_stub SceAudioIn_stub SceAudio_stub
         SceTouch_stub SceCtrl_stub SceIme_stub SceCommonDialog_stub SceMotion_stub
-        ScePower_stub SceDisplay_stub -Wl,--no-whole-archive)
+        ScePower_stub SceDisplay_stub SceSysmodule_stub -Wl,--no-whole-archive)
 endif()
 
 if(MSVC)
