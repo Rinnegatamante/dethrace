@@ -225,7 +225,7 @@ target_link_libraries(dethrace PRIVATE dethrace_obj compile_with_werror)
 target_sources(dethrace PRIVATE main.c)
 
 if (VITA)
-    target_link_options(dethrace PRIVATE  -Wl,-q -g)
+    target_link_options(dethrace PRIVATE  -Wl,-q,--wrap,fopen -g)
     target_link_libraries(dethrace PRIVATE -Wl,--whole-archive vitaGL vitashark mathneon stdc++
         SceShaccCgExt SceShaccCg_stub taihen_stub SceNet_stub SceHid_stub SceNetCtl_stub
         SceKernelDmacMgr_stub SceAppMgr_stub SceGxm_stub SceAudioIn_stub SceAudio_stub

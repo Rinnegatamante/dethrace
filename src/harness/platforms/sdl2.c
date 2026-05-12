@@ -182,51 +182,61 @@ uint32_t vita_buttons[] = {
 static void SDL2_Harness_ProcessWindowMessages(void) {
 	SceCtrlData pad;
 	sceCtrlPeekBufferPositive(0, &pad, 1);
-    int dinput_key;
+    int dethrace_scancode;
 	for (uint32_t i = 0; i < sizeof(vita_buttons) / sizeof(*vita_buttons); i++) {
         if ((pad.buttons & vita_buttons[i]) == vita_buttons[i]) {
             int sdl_scancode = map_vita_key_to_sdl_scancode(vita_buttons[i]);
             if (sdl_scancode >= 0) {
-                dinput_key = sdlScanCodeToDirectInputKeyNum[sdl_scancode];
-                if (dinput_key == 0) {
+                dethrace_scancode = sdl_scancode_map[sdl_scancode];
+                if (dethrace_scancode == 0) {
                     LOG_WARN("unexpected scan code %s (%d)", SDL_GetScancodeName(sdl_scancode), sdl_scancode);
                     continue;
                 }
-                directinput_key_state[dinput_key] = 0x80;
+                key_state[dethrace_scancode >> 5] |= (1 << (dethrace_scancode & 0x1F));
+				gKeyHandler_func();
             }
         } else {
             int sdl_scancode = map_vita_key_to_sdl_scancode(vita_buttons[i]);
             if (sdl_scancode >= 0) {
-                dinput_key = sdlScanCodeToDirectInputKeyNum[sdl_scancode];
-                if (dinput_key != 0) {
-                    directinput_key_state[dinput_key] = 0x00;
+                dethrace_scancode = sdl_scancode_map[sdl_scancode];
+                if (dethrace_scancode != 0) {
+                    key_state[dethrace_scancode >> 5] &= ~(1 << (dethrace_scancode & 0x1F));
+					gKeyHandler_func();
                 }
             }
         }
     }
     if (pad.ly < 80) {
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_UP];
-        directinput_key_state[dinput_key] = 0x80;
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_UP];
+        key_state[dethrace_scancode >> 5] |= (1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
     } else if (pad.ly > 170) {
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_DOWN];
-        directinput_key_state[dinput_key] = 0x80;
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_DOWN];
+        key_state[dethrace_scancode >> 5] |= (1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
     } else {
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_UP];
-        directinput_key_state[dinput_key] = 0x00;
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_DOWN];
-        directinput_key_state[dinput_key] = 0x00;
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_UP];
+        key_state[dethrace_scancode >> 5] &= ~(1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_DOWN];
+        key_state[dethrace_scancode >> 5] &= ~(1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
     }
     if (pad.lx > 170) {
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_RIGHT];
-        directinput_key_state[dinput_key] = 0x80;
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_RIGHT];
+        key_state[dethrace_scancode >> 5] |= (1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
     } else if (pad.lx < 80) {
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_LEFT];
-        directinput_key_state[dinput_key] = 0x80;
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_LEFT];
+        key_state[dethrace_scancode >> 5] |= (1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
     } else {
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_RIGHT];
-        directinput_key_state[dinput_key] = 0x00;
-        dinput_key = sdlScanCodeToDirectInputKeyNum[SDL_SCANCODE_LEFT];
-        directinput_key_state[dinput_key] = 0x00;
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_RIGHT];
+        key_state[dethrace_scancode >> 5] &= ~(1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
+        dethrace_scancode = sdl_scancode_map[SDL_SCANCODE_LEFT];
+        key_state[dethrace_scancode >> 5] &= ~(1 << (dethrace_scancode & 0x1F));
+		gKeyHandler_func();
     }
     SDL_Event event;
     while (SDL_PollEvent(&event)) {

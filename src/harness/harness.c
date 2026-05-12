@@ -15,6 +15,23 @@
 
 #ifdef __vita__
 #include <vitasdk.h>
+
+#ifdef __vita__
+long sysconf(int name) {
+	return 0;
+}
+
+FILE *__real_fopen(char *fname, char *mode);
+FILE *__wrap_fopen(char *fname, char *mode) {
+	sceClibPrintf("fopen %s\n", fname);
+	if (strncmp(fname, "ux0:", 4)) {
+		char patched_fname[256];
+		sprintf(patched_fname, "ux0:data/dethrace/%s", fname);
+		return __real_fopen(patched_fname, mode);
+	}
+	return __real_fopen(fname, mode);
+}
+#endif
 #endif
 
 extern br_uint_32 gI_am_cheating;
@@ -135,6 +152,79 @@ static void Harness_DetectGameMode(void) {
     char* buffer;
     int nb;
 
+#ifdef __vita__
+    if (access("ux0:data/dethrace/DATA/RACES/CASTLE.TXT", F_OK) != -1) {
+        // All splatpack edition have the castle track
+        if (access("ux0:data/dethrace/DATA/RACES/CASTLE2.TXT", F_OK) != -1) {
+            // Only the full splat release has the castle2 track
+            harness_game_info.defines.INTRO_SMK_FILE = "MIX_INTR.SMK";
+            harness_game_info.defines.GERMAN_LOADSCRN = "LOADSCRN.PIX";
+            harness_game_info.mode = eGame_splatpack;
+            printf("Game mode: Splat Pack\n");
+        } else if (access("ux0:data/dethrace/DATA/RACES/TINSEL.TXT", F_OK) != -1) {
+            // Only the the splat x-mas demo has the tinsel track
+            harness_game_info.defines.INTRO_SMK_FILE = "MIX_INTR.SMK";
+            harness_game_info.defines.GERMAN_LOADSCRN = "";
+            harness_game_info.mode = eGame_splatpack_xmas_demo;
+            printf("Game mode: Splat Pack X-mas demo\n");
+        } else {
+            // Assume we're using the splatpack demo
+            harness_game_info.defines.INTRO_SMK_FILE = "MIX_INTR.SMK";
+            harness_game_info.defines.GERMAN_LOADSCRN = "";
+            harness_game_info.mode = eGame_splatpack_demo;
+            printf("Game mode: Splat Pack demo\n");
+        }
+    } else if (access("ux0:data/dethrace/DATA/RACES/CITYB3.TXT", F_OK) != -1) {
+        // All non-splatpack edition have the cityb3 track
+        if (access("ux0:data/dethrace/DATA/RACES/CITYA1.TXT", F_OK) == -1) {
+            // The demo does not have the citya1 track
+            harness_game_info.defines.INTRO_SMK_FILE = "";
+            harness_game_info.defines.GERMAN_LOADSCRN = "COWLESS.PIX";
+            harness_game_info.mode = eGame_carmageddon_demo;
+            printf("Game mode: Carmageddon demo\n");
+        } else {
+            goto carmageddon;
+        }
+    } else {
+    carmageddon:
+        if (access("ux0:data/dethrace/DATA/CUTSCENE/Mix_intr.smk", F_OK) == -1) {
+            harness_game_info.defines.INTRO_SMK_FILE = "Mix_intr.smk";
+        } else {
+            harness_game_info.defines.INTRO_SMK_FILE = "MIX_INTR.SMK";
+        }
+        harness_game_info.defines.GERMAN_LOADSCRN = "LOADSCRN.PIX";
+        harness_game_info.mode = eGame_carmageddon;
+        printf("Game mode: Carmageddon\n");
+    }
+
+    harness_game_info.localization = eGameLocalization_none;
+    if (access("ux0:data/dethrace/DATA/TRNSLATE.TXT", F_OK) != -1) {
+        f = fopen("ux0:data/dethrace/DATA/TRNSLATE.TXT", "rb");
+        fseek(f, 0, SEEK_END);
+        filesize = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        buffer = malloc(filesize + 1);
+        nb = fread(buffer, 1, filesize, f);
+        if (nb != filesize) {
+            LOG_PANIC("Unable to read DATA/TRNSLATE.TXT");
+        }
+        buffer[filesize] = '\0';
+        fclose(f);
+        if (strstr(buffer, "NEUES SPIEL") != NULL) {
+            harness_game_info.localization = eGameLocalization_german;
+            LOG_INFO2("Language: \"%s\"", "German");
+        } else if (strstr(buffer, "NOWA GRA") != NULL) {
+            harness_game_info.localization = eGameLocalization_polish;
+            LOG_INFO2("Language: \"%s\"", "Polish");
+        } else if (strstr(buffer, "NOUVELLE PARTIE") != NULL) {
+            harness_game_info.localization = eGameLocalization_french;
+            LOG_INFO2("Language: \"%s\"", "French");
+        } else {
+            LOG_INFO("Language: unrecognized");
+        }
+        free(buffer);
+    }
+#else
     if (access("DATA/RACES/CASTLE.TXT", F_OK) != -1) {
         // All splatpack edition have the castle track
         if (access("DATA/RACES/CASTLE2.TXT", F_OK) != -1) {
@@ -206,7 +296,7 @@ static void Harness_DetectGameMode(void) {
         }
         free(buffer);
     }
-
+#endif
     switch (harness_game_info.mode) {
     case eGame_carmageddon:
         switch (harness_game_info.localization) {
@@ -257,7 +347,11 @@ void Harness_DetectAndSetWorkingDirectory(char* argv0) {
         if (access("DATA/GENERAL.TXT", F_OK) == 0) {
             // good, found
         } else {
+#ifdef __vita__
+			strcpy(pref_path, "ux0:data/dethrace/");
+#else
             OS_GetPrefPath(pref_path, "dethrace");
+#endif
             path = pref_path;
         }
     }
@@ -345,10 +439,11 @@ int Harness_Init(int* argc, char* argv[]) {
 }
 
 void Harness_Quit(void) {
-
+#ifndef __vita__
     if (harness_game_config.install_signalhandler) {
         OS_RemoveSignalHandler();
     }
+#endif
 }
 
 // used by unit tests
@@ -549,8 +644,11 @@ static int Harness_Ini_Callback(void* user, const char* section, const char* nam
 int Harness_ProcessIniFile(void) {
     int i;
     char path[1024];
-
+#ifdef __vita__
+	strcpy(path, "ux0:data/dethrace/");
+#else
     OS_GetPrefPath(path, "dethrace");
+#endif
     strcat(path, "dethrace.ini");
     LOG_INFO2("Loading ini file %s", path);
 
