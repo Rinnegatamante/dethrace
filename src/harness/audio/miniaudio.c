@@ -46,6 +46,7 @@ typedef struct tMiniaudio_stream {
 ma_engine engine;
 ma_sound cda_sound;
 int cda_sound_initialized;
+int ma_engine_initialized;
 
 #ifdef __vita__
 #define NUM_SAMPLES (512)
@@ -138,6 +139,7 @@ tAudioBackend_error_code AudioBackend_Init(void) {
     LOG_INFO2("Playback device: '%s'", engine.pDevice->playback.name);
 #endif
     ma_engine_set_volume(&engine, harness_game_config.volume_multiplier);
+    ma_engine_initialized = 1;
 
     return eAB_success;
 }
@@ -152,6 +154,7 @@ tAudioBackend_error_code AudioBackend_InitCDA(void) {
 
 void AudioBackend_UnInit(void) {
     ma_engine_uninit(&engine);
+    ma_engine_initialized = 0;
 }
 
 void AudioBackend_UnInitCDA(void) {
@@ -256,6 +259,10 @@ int AudioBackend_SoundIsPlaying(void* type_struct_sample) {
 
     miniaudio = (tMiniaudio_sample*)type_struct_sample;
     assert(miniaudio != NULL);
+
+    if (!miniaudio->initialized) {
+        return 0;
+    }
 
     if (ma_sound_is_playing(&miniaudio->sound)) {
         return 1;

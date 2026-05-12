@@ -366,6 +366,7 @@ static int SDL2_Harness_ShowErrorMessage(char* title, char* message) {
 
 static void SDL2_Harness_CreateWindow(const char* title, int width, int height, tHarness_window_type window_type) {
     int window_width, window_height;
+    Uint32 extra_window_flags;
 
     render_width = width;
     render_height = height;
@@ -383,13 +384,18 @@ static void SDL2_Harness_CreateWindow(const char* title, int width, int height, 
         LOG_PANIC2("SDL_INIT_VIDEO error: %s", SDL2_GetError());
     }
 
+    extra_window_flags = SDL_WINDOW_RESIZABLE;
+    if (harness_game_config.start_full_screen) {
+        extra_window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    }
+
     if (window_type == eWindow_type_opengl) {
 
         window = SDL2_CreateWindow(title,
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             window_width, window_height,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+            extra_window_flags | SDL_WINDOW_OPENGL);
 
         if (window == NULL) {
             LOG_PANIC2("Failed to create window: %s", SDL2_GetError());
@@ -417,7 +423,7 @@ static void SDL2_Harness_CreateWindow(const char* title, int width, int height, 
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             window_width, window_height,
-            SDL_WINDOW_RESIZABLE);
+            extra_window_flags);
         if (window == NULL) {
             LOG_PANIC2("Failed to create window: %s", SDL2_GetError());
         }
@@ -446,10 +452,6 @@ static void SDL2_Harness_CreateWindow(const char* title, int width, int height, 
     viewport.y = 0;
     viewport.scale_x = 1;
     viewport.scale_y = 1;
-
-    if (harness_game_config.start_full_screen) {
-        SDL2_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    }
 }
 
 static void SDL2_Harness_Swap(br_pixelmap* back_buffer) {
@@ -486,7 +488,7 @@ static void SDL2_Harness_Swap(br_pixelmap* back_buffer) {
 static void SDL2_Harness_PaletteChanged(br_colour entries[256]) {
     int i;
     for (i = 0; i < 256; i++) {
-        converted_palette[i] = (0xff << 24 | BR_RED(entries[i]) << 16 | BR_GRN(entries[i]) << 8 | BR_BLU(entries[i]));
+        converted_palette[i] = (0xffu << 24 | BR_RED(entries[i]) << 16 | BR_GRN(entries[i]) << 8 | BR_BLU(entries[i]));
     }
     if (last_screen_src != NULL) {
         SDL2_Harness_Swap(last_screen_src);

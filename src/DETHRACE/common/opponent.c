@@ -275,7 +275,7 @@ tS16 ReallocExtraPathNodes(int pHow_many_then) {
     if (pHow_many_then != 0) {
         first_new_node = gProgram_state.AI_vehicles.number_of_path_nodes;
         new_nodes = BrMemAllocate(sizeof(tPath_node) * (pHow_many_then + gProgram_state.AI_vehicles.number_of_path_nodes), kMem_oppo_new_nodes);
-        memcpy(new_nodes, gProgram_state.AI_vehicles.path_nodes, sizeof(tPath_node) * gProgram_state.AI_vehicles.number_of_path_nodes);
+        DR_SAFE_MEMCPY(new_nodes, gProgram_state.AI_vehicles.path_nodes, sizeof(tPath_node) * gProgram_state.AI_vehicles.number_of_path_nodes);
         if (gProgram_state.AI_vehicles.path_nodes != NULL) {
             BrMemFree(gProgram_state.AI_vehicles.path_nodes);
         }
@@ -299,7 +299,7 @@ tS16 ReallocExtraPathSections(int pHow_many_then) {
     if (pHow_many_then != 0) {
         first_new_section = gProgram_state.AI_vehicles.number_of_path_sections;
         new_sections = BrMemAllocate(sizeof(tPath_section) * (pHow_many_then + gProgram_state.AI_vehicles.number_of_path_sections), kMem_oppo_new_sections);
-        memcpy(new_sections, gProgram_state.AI_vehicles.path_sections, sizeof(tPath_section) * gProgram_state.AI_vehicles.number_of_path_sections);
+        DR_SAFE_MEMCPY(new_sections, gProgram_state.AI_vehicles.path_sections, sizeof(tPath_section) * gProgram_state.AI_vehicles.number_of_path_sections);
         if (gProgram_state.AI_vehicles.path_sections != NULL) {
             BrMemFree(gProgram_state.AI_vehicles.path_sections);
         }
@@ -2755,7 +2755,7 @@ void DisposeOpponents(void) {
     int i;
     if (gProgram_state.AI_vehicles.number_of_cops != 0) {
         for (i = 0; i < gProgram_state.AI_vehicles.number_of_cops; i++) {
-            DisposeCar(gProgram_state.AI_vehicles.cops[i].car_spec, (i == gBIG_APC_index) ? 4 : 3);
+            DisposeCar(gProgram_state.AI_vehicles.cops[i].car_spec, (i - gBIG_APC_index != 0) ? 3 : 4);
             BrMemFree(gProgram_state.AI_vehicles.cops[i].car_spec);
         }
     }
