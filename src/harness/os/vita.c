@@ -37,7 +37,7 @@ char* OS_GetNextFileInDirectory(void) {
         }
     }
     sceIoDclose(directory_iterator);
-    directory_iterator = NULL;
+    directory_iterator = 0;
     return NULL;
 }
 

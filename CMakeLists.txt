@@ -115,6 +115,15 @@ if(NOT DETHRACE_PLATFORMS)
 endif()
 
 add_subdirectory(lib/BRender-v1.3.2)
+if(VITA)
+    # BRender's POSIX image backend is supplied by vitasdk's libdl.
+    set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/lib/BRender-v1.3.2/core/host/himage.c"
+        TARGET_DIRECTORY host APPEND PROPERTY COMPILE_DEFINITIONS __unix__)
+    cmake_policy(PUSH)
+    cmake_policy(SET CMP0079 NEW)
+    target_link_libraries(host PRIVATE SceSblSsMgr_stub)
+    cmake_policy(POP)
+endif()
 add_subdirectory(lib/libsmacker)
 add_subdirectory(lib/miniaudio)
 add_subdirectory(lib/stb)

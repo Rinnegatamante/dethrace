@@ -475,11 +475,21 @@ static void SDL2_Harness_GetViewport(int* x, int* y, float* width_multipler, flo
     *height_multiplier = viewport.scale_y;
 }
 
+#ifdef __vita__
+static void SDL2_Harness_ProcessWindowMessagesCallback(MSG_* msg) {
+    (void)SDL2_Harness_ProcessWindowMessages(msg);
+}
+#endif
+
 static int SDL2_Harness_Platform_Init(tHarness_platform* platform) {
     if (SDL2_LoadSymbols() != 0) {
         return 1;
     }
+#ifdef __vita__
+    platform->ProcessWindowMessages = SDL2_Harness_ProcessWindowMessagesCallback;
+#else
     platform->ProcessWindowMessages = SDL2_Harness_ProcessWindowMessages;
+#endif
     platform->Sleep = SDL2_Delay;
     platform->GetTicks = SDL2_GetTicks;
     platform->ShowCursor = SDL2_ShowCursor;
